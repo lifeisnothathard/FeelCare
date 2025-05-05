@@ -18,30 +18,30 @@ class HomePage extends StatefulWidget {
       ["Read Book", false],
     ];
     
-    //bool to control habit completed
-    bool habitCompleted = false;
-    
     // checkbox was tapped
-    void checkBoxTapped(bool? value) {
+    void checkBoxTapped(bool? value, int index) {
       setState(() {
-        habitCompleted = value!;
+        todaysHabitList[index][1] = value!;
       });
     }
     
+    //create a new habit
+
     @override
     Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[300],
-      body: ListView(
-        children: [
-          //habit tiles
-          HabitTile(
-            habitName: "Morning Run",
-            habitCompleted: false,
-            onChanged: (value) => checkBoxTapped(value),
-          )
-        ],
+      body: ListView.builder(
+        itemCount: todaysHabitList.length,
+        itemBuilder: (context, index) {
+          return HabitTile(
+            habitName: todaysHabitList[index][0],
+            habitCompleted: todaysHabitList[index][1],
+            onChanged: (value)=>checkBoxTapped(value,index) ,
+          );
+    },
       ),
     );
+    }
   }
-}
+        
