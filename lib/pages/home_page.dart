@@ -43,6 +43,7 @@ class HomePage extends StatefulWidget {
       setState(() {
         db.todaysHabitList[index][1] = value!;
       });
+      db.updateDatabase();
     }
     
     //create a new habit
@@ -73,6 +74,8 @@ class HomePage extends StatefulWidget {
       _newHabitController.clear();
       //pop dialog box
       Navigator.of(context).pop();
+
+      db.updateDatabase();
     }
     
     //cancel new habit
@@ -105,6 +108,7 @@ class HomePage extends StatefulWidget {
       });
       _newHabitController.clear();
       Navigator.pop(context);
+      db.updateDatabase();
     }
 
     //delete existing habit 
@@ -112,6 +116,7 @@ class HomePage extends StatefulWidget {
       setState(() {
         db.todaysHabitList.remove(index);
       });
+      db.updateDatabase();
     }
 
     @override
