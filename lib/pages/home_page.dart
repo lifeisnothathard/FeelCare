@@ -1,4 +1,5 @@
 import 'package:feelcare/components/habit_tile.dart';
+import 'package:feelcare/components/month_summary.dart';
 import 'package:feelcare/components/my_fab.dart';
 import 'package:feelcare/components/my_alert_box.dart';
 import 'package:feelcare/data/habit_database.dart';
@@ -124,11 +125,21 @@ class HomePage extends StatefulWidget {
     return Scaffold(
       backgroundColor: Colors.grey[300],
       floatingActionButton: MyFloatingActionButton(
-        onPressed: () => createNewHabit(),
-      ),
-      body: ListView.builder(
-        itemCount: db.todaysHabitList.length,
-        itemBuilder: (context, index) {
+        onPressed: createNewHabit),
+      body: ListView(
+        children: [
+          //monthly summary heat map
+          MonthlySummary(
+            datasets: db.heatMapDataSet, 
+            startDate:_myBox.get("STARTDATE")),
+
+          //list of habits     
+
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: db.todaysHabitList.length,
+            itemBuilder: (context, index) {
           return HabitTile(
             habitName: db.todaysHabitList[index][0],
             habitCompleted: db.todaysHabitList[index][1],
@@ -136,9 +147,11 @@ class HomePage extends StatefulWidget {
             settingsTapped: (context)=>openHabitSettings(index),
             deleteTapped: (context) => deleteHabit(index),
           );
-    },
+        },
       ),
-    );
-    }
-  }
+    ],
+   ),
+   );
+ }
+}
         
