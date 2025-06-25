@@ -10,7 +10,7 @@ class HabitDatabase {
 
   //create initial default data
   void createDefaultData() {
-    List todaysHabitList = [
+     todaysHabitList = [
       // [ habitName, habitCompleted ]
       ["Run", false],
       ["Read", false],
@@ -69,36 +69,31 @@ class HabitDatabase {
   }
   
   void loadHeatMap() {
-    DateTime startDate = createDataTimeObject(_myBox.get("START_DATE"));
-
-    //COUNT THE NUMBER OF DAYS TO LOAD
-    int daysInBetween = DateTime.now().difference(startDate).inDays;
-
-    //go from startdate to today and add each percentage
-    //"PERCENTAGE_SUMMARY_yyyymmdd" will be the key
-    for (int i =0 ; i< todaysHabitList.length; i++){
-      String yyyymmdd = convertDateTimeToString(startDate.add(Duration(days: i)),
-      );
-
-      double strengthAsPercent = double.parse(
-        _myBox.get("PERCENTAGE_SUMMARY_$yyyymmdd") ?? "0.0",
-      );
-      
-      // split the datetime up so to not worry about hour/min/secs etc.
-
-      int year = startDate.add(Duration(days: i)).year;
-
-      int month = startDate.add(Duration(days: i)).month;
-
-      int day = startDate.add(Duration(days: i)).day;
-
-      final percentForEachDay = <DateTime, int>{
-        DateTime(year, month, day): (10 * strengthAsPercent).toInt(),
-      };
-
-      heatMapDataSet.addEntries(percentForEachDay.entries);
-      print(heatMapDataSet);
+  try {
+    final startDateString = _myBox.get("START_DATE");
+    if (startDateString == null) {
+      createDefaultData();
+      return;
     }
+
+    DateTime startDate = createDataTimeObject(startDateString);
+    int daysInBetween = DateTime.now().difference(startDate).inDays;
     
+    heatMapDataSet.clear();
+
+    for (int i = 0; i <= daysInBetween; i++) {
+      DateTime currentDate = startDate.add(Duration(days: i));
+      String yyyymmdd = convertDateTimeToString(currentDate);
+      
+      double strengthAsPercent = double.tryParse(
+        _myBox.get("PERCENTAGE_SUMMARY_$yyyymmdd")?.toString() ?? "0.0"
+      ) ?? 0.0;
+
+      heatMapDataSet[DateTime(currentDate.year, currentDate.month, currentDate.day)] = 
+        (10 * strengthAsPercent).toInt();
+    }
+  } catch (e) {
+    // Consider showing a user-friendly error message
   }
+}
 }
