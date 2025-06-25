@@ -1,157 +1,101 @@
-import 'package:feelcare/components/habit_tile.dart';
-import 'package:feelcare/components/month_summary.dart';
-import 'package:feelcare/components/my_fab.dart';
-import 'package:feelcare/components/my_alert_box.dart';
-import 'package:feelcare/data/habit_database.dart';
+import 'package:feelcare/pages/login.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({
-    super.key, 
-  });
+// You might need to import your login.dart file if you want to navigate back to it.
+// import 'package:your_project_name/login.dart'; // Adjust import path as needed
+
+// This is the main entry point for the home page.
+class HomePage extends StatelessWidget {
+  // Constructor for HomePage, with an optional key.
+  const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-  } 
-
-  class _HomePageState extends State<HomePage> {
-    HabitDatabase db = HabitDatabase();
-    final _myBox = Hive.box("Habit_Database");
-
-    @override
-    void initState() {
-
-      //if there is no current habit list, then it is the 1st time ever opening the app
-      //then create default data
-      if (_myBox.get("CURRENT_HABIT_LIST") == null){
-        db.createDefaultData();      
-      }
-
-      //there already exist data, this is not the first time
-      else {
-        db.loadData();
-      }
-
-      //update the database
-      db.updateDatabase();
-
-      super.initState();    
-    }
-
-    // checkbox was tapped
-    void checkBoxTapped(bool? value, int index) {
-      setState(() {
-        db.todaysHabitList[index][1] = value!;
-      });
-      db.updateDatabase();
-    }
-    
-    //create a new habit
-    final _newHabitController = TextEditingController();
-    void createNewHabit(){
-      //show alert dialog for user to enter the new habit details
-      showDialog(
-        context: context,
-        builder: (context){
-          return MyAlertBox(
-            controller: _newHabitController,
-            hintText: 'Enter Habit Name',
-            onSave: saveNewHabit,
-            onCancel: cancelDialogBox,
-          );
-        },
-      );
-    }
-
-    //save new habit
-    void saveNewHabit(){
-      //add new habit to todays habit list
-      setState(() {
-        db.todaysHabitList.add([_newHabitController.text,false]);
-      });
-
-      //clear textfield
-      _newHabitController.clear();
-      //pop dialog box
-      Navigator.of(context).pop();
-
-      db.updateDatabase();
-    }
-    
-    //cancel new habit
-    void cancelDialogBox(){
-      //clear textfield
-      _newHabitController.clear();
-      //pop dialog box
-      Navigator.of(context).pop();
-    }
-
-    //open habbit settins to edit
-    void openHabitSettings(int index) {
-      showDialog(
-        context: context, 
-        builder: (context) {
-          return MyAlertBox(
-            controller: _newHabitController, 
-            hintText: db.todaysHabitList[index][0],
-            onSave: () => saveExistingHabit(index), 
-            onCancel: cancelDialogBox,
-          );
-        },
-      );
-    }
-
-    //save existing habit with a new name
-    void saveExistingHabit(int index) {
-      setState(() {
-        db.todaysHabitList[index][0]=_newHabitController.text;
-      });
-      _newHabitController.clear();
-      Navigator.pop(context);
-      db.updateDatabase();
-    }
-
-    //delete existing habit 
-    void deleteHabit(int index) {
-      setState(() {
-        db.todaysHabitList.remove(index);
-      });
-      db.updateDatabase();
-    }
-
-    @override
-    Widget build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      floatingActionButton: MyFloatingActionButton(
-        onPressed: createNewHabit),
-      body: ListView(
-        children: [
-          //monthly summary heat map
-          MonthlySummary(
-            datasets: db.heatMapDataSet, 
-            startDate:_myBox.get("STARTDATE")),
-
-          //list of habits     
-
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: db.todaysHabitList.length,
-            itemBuilder: (context, index) {
-          return HabitTile(
-            habitName: db.todaysHabitList[index][0],
-            habitCompleted: db.todaysHabitList[index][1],
-            onChanged: (value)=>checkBoxTapped(value,index) ,
-            settingsTapped: (context)=>openHabitSettings(index),
-            deleteTapped: (context) => deleteHabit(index),
-          );
-        },
+      appBar: AppBar(
+        title: const Text('Home Page'),
+        centerTitle: true, // Center the app bar title
+        // Optional: Add actions like a logout button here
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushReplacement(
+                 context,
+                 MaterialPageRoute(builder: (context) => const LoginScreen()),
+               );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Logged out!')),
+              );
+              Navigator.pop(LoginScreen() as BuildContext); // Goes back to the previous screen (e.g., LoginScreen)
+            },
+            tooltip: 'Logout', // Tooltip for accessibility
+          ),
+        ],
       ),
-    ],
-   ),
-   );
- }
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // Vertically center content
+            crossAxisAlignment: CrossAxisAlignment.center, // Horizontally center content
+            children: <Widget>[
+              // Welcome Icon
+              Icon(
+                Icons.check_circle_outline,
+                size: 120,
+                color: Colors.green[700],
+              ),
+              const SizedBox(height: 30), // Spacing
+
+              // Welcome Message
+              const Text(
+                'Welcome Home!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // Placeholder for user-specific content or features
+              Text(
+                'You have successfully logged in. This is your personal dashboard.',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+
+              // Example of a button to navigate to another feature
+              ElevatedButton.icon(
+                onPressed: () {
+                  // Implement navigation to another screen or feature
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Exploring features...')),
+                  );
+                },
+                icon: const Icon(Icons.dashboard), // Icon for the button
+                label: const Text('Go to Dashboard'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  backgroundColor: Colors.deepPurpleAccent, // Button background color
+                  foregroundColor: Colors.white, // Button text color
+                  elevation: 5,
+                  textStyle: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
-        
