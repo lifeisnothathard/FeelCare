@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/drawer/side_dashboard.dart';
-import 'package:wecare/pages/login.dart';
-import 'package:wecare/themes/theme_provider.dart';
+import 'package:feelcare/drawer/side_dashboard.dart';
+import 'package:feelcare/pages/login.dart';
+import 'package:feelcare/themes/theme_provider.dart';
 
 
 // This is the main entry point for the home page.

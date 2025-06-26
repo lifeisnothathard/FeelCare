@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/pages/home_page.dart';
-import 'package:wecare/themes/theme_provider.dart';
+import 'package:feelcare/pages/home_page.dart';
+import 'package:feelcare/themes/theme_provider.dart';
 
 // This is the main entry point for the login screen.
 class LoginScreen extends StatefulWidget {
