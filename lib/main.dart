@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:feelcare/pages/login.dart';
-import 'package:feelcare/themes/theme_provider.dart';
-import 'package:feelcare/pages/sign_up.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-// Import your home page widget here (Gantikan dengan path fail home page awak yang betul):
-import 'package:feelcare/core/dashboard.dart'; // Import DashboardPage
+import 'package:wecare/pages/login.dart';
+import 'package:wecare/themes/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
