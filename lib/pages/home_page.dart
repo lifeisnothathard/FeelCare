@@ -1,38 +1,40 @@
-import 'package:feelcare/pages/login.dart';
 import 'package:flutter/material.dart';
+import 'package:wecare/drawer/side_dashboard.dart';
+import 'package:wecare/pages/login.dart';
+import 'package:wecare/themes/theme_provider.dart';
 
-// You might need to import your login.dart file if you want to navigate back to it.
-// import 'package:your_project_name/login.dart'; // Adjust import path as needed
 
 // This is the main entry point for the home page.
 class HomePage extends StatelessWidget {
-  // Constructor for HomePage, with an optional key.
-  const HomePage({super.key});
+  final ThemeProvider themeProvider; // Receive ThemeProvider instance
 
+  const HomePage ({super.key, required this.themeProvider});
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
         centerTitle: true, // Center the app bar title
-        // Optional: Add actions like a logout button here
+        // No need for a leading icon for the drawer here,
+        // Scaffold automatically adds one if a Drawer is present.
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              Navigator.pushReplacement(
-                 context,
-                 MaterialPageRoute(builder: (context) => const LoginScreen()),
-               );
+              // Handle logout logic here
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Logged out!')),
               );
-              Navigator.pop(LoginScreen() as BuildContext); // Goes back to the previous screen (e.g., LoginScreen)
+              Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen(themeProvider: themeProvider)));
             },
             tooltip: 'Logout', // Tooltip for accessibility
           ),
         ],
       ),
+      // --- Call Side Dashboard (Drawer) ---
+      drawer: const AppDrawer(),
+     
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -62,7 +64,7 @@ class HomePage extends StatelessWidget {
 
               // Placeholder for user-specific content or features
               Text(
-                'You have successfully logged in. This is your personal dashboard.',
+                'You have successfully logged in. Use the side menu for navigation.',
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey[700],
@@ -74,13 +76,15 @@ class HomePage extends StatelessWidget {
               // Example of a button to navigate to another feature
               ElevatedButton.icon(
                 onPressed: () {
-                  // Implement navigation to another screen or feature
+                  // Open the drawer programmatically if needed, or
+                  // just show a message.
+                  Scaffold.of(context).openDrawer(); // Opens the drawer
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Exploring features...')),
+                    const SnackBar(content: Text('Opening side menu...')),
                   );
                 },
-                icon: const Icon(Icons.dashboard), // Icon for the button
-                label: const Text('Go to Dashboard'),
+                icon: const Icon(Icons.menu), // Icon for the button
+                label: const Text('Open Menu'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -99,3 +103,24 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+// To integrate this with your login.dart, you would modify the _login function
+// in login.dart to navigate to this HomePage upon successful login:
+
+/*
+// In login.dart, inside _LoginScreenState's _login method:
+void _login() {
+  if (_formKey.currentState!.validate()) {
+    // Simulate successful login
+    debugPrint('Email: ${_emailController.text}');
+    debugPrint('Password: ${_passwordController.text}');
+
+    // Navigate to the HomePage and replace the current route,
+    // so the user cannot go back to the login page with the back button.
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  }
+}
+*/

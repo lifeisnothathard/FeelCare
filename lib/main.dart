@@ -1,8 +1,15 @@
-import 'package:feelcare/pages/login.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wecare/pages/login.dart';
+import 'package:wecare/themes/theme_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -10,13 +17,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
-      title: 'Flutter Login Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: const LoginScreen(), // Set LoginScreen as the home widget
+      title: 'WeCare',
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: themeProvider.themeMode,
+      home: LoginScreen(themeProvider: ThemeProvider(),),
     );
   }
 }

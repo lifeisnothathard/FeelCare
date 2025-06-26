@@ -1,9 +1,12 @@
-import 'package:feelcare/pages/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:wecare/pages/home_page.dart';
+import 'package:wecare/themes/theme_provider.dart';
 
 // This is the main entry point for the login screen.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final ThemeProvider themeProvider; // Receive ThemeProvider instance
+
+  const LoginScreen ({super.key, required this.themeProvider});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -35,11 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
     debugPrint('Email: ${_emailController.text}');
     debugPrint('Password: ${_passwordController.text}');
 
-    // Navigate to the HomePage and replace the current route,
-    // so the user cannot go back to the login page with the back button.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
+    // Navigate to the HomePage and replace the current route
+    Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(themeProvider: ThemeProvider()))
     );
   }
 }
