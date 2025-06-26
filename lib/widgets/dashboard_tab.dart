@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/themes/colors.dart';
-import 'package:wecare/widgets/large_card.dart';
-import 'package:wecare/widgets/progress.dart';
+import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/widgets/large_card.dart';
+import 'package:feelcare/widgets/progress.dart';
 
 // Represents the content for the 'Dashboard' tab.
 class DashboardTab extends StatelessWidget {

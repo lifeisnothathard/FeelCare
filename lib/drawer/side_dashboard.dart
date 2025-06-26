@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/core/dashboard.dart';
-import 'package:wecare/pages/home_page.dart';
-import 'package:wecare/pages/login.dart';
-import 'package:wecare/themes/colors.dart';
-import 'package:wecare/themes/theme_provider.dart';
+import 'package:feelcare/core/dashboard.dart';
+import 'package:feelcare/pages/home_page.dart';
+import 'package:feelcare/pages/login.dart';
+import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/themes/theme_provider.dart';
 // import 'package:your_project_name/login.dart'; // If you have a login page to go back to
 
 // A reusable widget that defines the content of the application's side drawer.

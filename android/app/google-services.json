@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "244212724590",
+    "project_id": "feel-care-2e521",
+    "storage_bucket": "feel-care-2e521.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244212724590:android:7b2600c0190ea8c436477f",
+        "android_client_info": {
+          "package_name": "com.example.feelcare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe-QWqliLVf5Hdoekr1GTxuoBVfAumclY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244212724590:android:aac2d2c87de78b9136477f",
+        "android_client_info": {
+          "package_name": "com.project.feelcare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe-QWqliLVf5Hdoekr1GTxuoBVfAumclY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

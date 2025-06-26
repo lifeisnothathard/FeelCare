@@ -1,7 +1,7 @@
 //kumpul habit disini
 
 import 'package:flutter/material.dart';
-import 'package:wecare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart';
 
 // Represents the content for the 'Habits' tab.
 class HabitsTab extends StatelessWidget {

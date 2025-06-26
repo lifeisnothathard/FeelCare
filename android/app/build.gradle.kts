@@ -42,3 +42,10 @@ android {
 flutter {
     source = "../.."
 }
+
+apply(plugin = "com.google.gms.google-services")
+
+dependencies {
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+}
+

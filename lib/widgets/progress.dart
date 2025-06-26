@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart';
 
 //This widget will be used for the small progress cards (Success Rate, Total Entries, Positive Days, Negative Days).
 // A reusable widget to display a small progress card with an icon, title, and value.

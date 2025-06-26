@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/pages/home_page.dart';
-import 'package:wecare/themes/theme_provider.dart';
+import 'package:feelcare/pages/home_page.dart';
+import 'package:feelcare/themes/theme_provider.dart';
 
 // This is the main entry point for the login screen.
 class LoginScreen extends StatefulWidget {
@@ -170,17 +170,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text("Don't have an account?"),
                     TextButton(
-                      onPressed: () {
-                        // Handle navigate to sign up screen
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Sign Up pressed!')),
-                        );
-                      },
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(color: Colors.deepPurple),
-                      ),
-                    ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/signup');
+                  },
+                  child: const Text(
+                  'Sign Up',
+                  style: TextStyle(color: Colors.deepPurple),
+                  ),
+                ),
                   ],
                 ),
               ],

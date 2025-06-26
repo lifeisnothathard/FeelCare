@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/drawer/side_dashboard.dart';
-import 'package:wecare/habit_data/new_habit.dart';
-import 'package:wecare/themes/colors.dart';
-import 'package:wecare/themes/theme_provider.dart';
-import 'package:wecare/widgets/add_habit.dart';
-import 'package:wecare/widgets/dashboard_tab.dart';
+import 'package:feelcare/drawer/side_dashboard.dart';
+import 'package:feelcare/habit_data/new_habit.dart';
+import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/themes/theme_provider.dart';
+import 'package:feelcare/widgets/add_habit.dart';
+import 'package:feelcare/widgets/dashboard_tab.dart';
 
 // The main DashboardPage, acting as a container for tabs and overall structure.
 class DashboardPage extends StatefulWidget {

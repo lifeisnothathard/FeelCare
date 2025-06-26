@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wecare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart';
 
 // A reusable widget to display a large progress card, typically for streaks or key metrics.
 class LargeProgressCard extends StatelessWidget {
