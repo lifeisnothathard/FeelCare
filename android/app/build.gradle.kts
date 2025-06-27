@@ -6,6 +6,9 @@ plugins {
 }
 
 android {
+    defaultConfig {
+        minSdkVersion 21 // Required for biometrics
+    }
     namespace = "com.example.feelcare"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion

@@ -1,150 +1,100 @@
 import 'package:flutter/material.dart';
-import 'package:feelcare/core/dashboard.dart';
-import 'package:feelcare/pages/home_page.dart';
-import 'package:feelcare/pages/login.dart';
-import 'package:feelcare/themes/colors.dart';
 import 'package:feelcare/themes/theme_provider.dart';
-// import 'package:your_project_name/login.dart'; // If you have a login page to go back to
+import 'package:feelcare/themes/colors.dart'; // Pastikan ini diimport
+import 'package:firebase_auth/firebase_auth.dart'; // Pastikan ini diimport
 
-// A reusable widget that defines the content of the application's side drawer.
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final ThemeProvider themeProvider;
+
+  const AppDrawer({
+    super.key,
+    required this.themeProvider,  // HANYA themeProvider yang diperlukan di sini
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Get the current theme's brightness to apply theme-aware colors.
+    // Dapatkan data pengguna secara langsung dari Firebase di sini
+    final user = FirebaseAuth.instance.currentUser;
+    final userEmail = user?.email ?? 'No email';
+    final userName = user?.displayName ?? 'User';
 
     return Drawer(
-      // The background color of the drawer itself
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: AppColors.backgroundColor, // Gunakan AppColors dari themes/colors.dart
       child: ListView(
-        padding: EdgeInsets.zero, // Remove default ListView padding for header
-        children: <Widget>[
-          // Drawer Header with User Info or App Logo
+        padding: EdgeInsets.zero,
+        children: [
           UserAccountsDrawerHeader(
-            accountName: Text(
-              'John Doe', // Replace with dynamic user name
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: AppColors.textColor, // Text color adapts
-              ),
-            ),
-            accountEmail: Text(
-              'john.doe@example.com', // Replace with dynamic user email
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textColor.withValues(), // Text color adapts
-              ),
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.cardBackground, // Circle background adapts
-              child: Icon(
-                Icons.person,
-                color: AppColors.darkGreen, // Icon color adapts
-                size: 50,
-              ),
-            ),
+            accountName: Text(userName), // Gunakan userName yang didapatkan di sini
+            accountEmail: Text(userEmail), // Gunakan userEmail yang didapatkan di sini
+            currentAccountPicture: user?.photoURL != null
+                ? CircleAvatar(
+                    backgroundImage: NetworkImage(user!.photoURL!),
+                  )
+                : CircleAvatar(
+                    backgroundColor: AppColors.primaryGreen, // Contoh warna latar belakang
+                    child: Text(
+                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U', // Initial huruf pertama nama
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen, // Header background adapts
-              image: DecorationImage(
-                image: NetworkImage(
-                  'https://placehold.co/600x200/5E35B1/FFFFFF?text=Background', // Placeholder image (consider local assets)
-                ),
-                fit: BoxFit.cover,
-                // Apply a color filter to the image to make it less prominent
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withValues(), // Darkens the image slightly
-                  BlendMode.darken,
-                ),
-              ),
+              color: AppColors.primaryGreen, // Gunakan warna tema untuk header
             ),
           ),
-          // Drawer Items (List Tiles for navigation)
           ListTile(
-            leading: Icon(Icons.home, color: AppColors.textColor),
-            title: Text(
-              'Home',
-              style: TextStyle(color: AppColors.textColor),
-            ),
+            leading: Icon(Icons.home, color: AppColors.textColor), // Contoh warna icon
+            title: Text('Home', style: TextStyle(color: AppColors.textColor)),
             onTap: () {
-              // Close the drawer
-              Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(themeProvider: ThemeProvider(),))
-              );
+              Navigator.pop(context); // Close drawer
+              // Navigate to home page if not already there
+              // Navigator.pushReplacementNamed(context, '/home'); // Anda mungkin sudah di home, ini hanya contoh
             },
           ),
           ListTile(
-            leading: Icon(Icons.dashboard, color: AppColors.textColor),
-            title: Text(
-              'Dashboard',
-              style: TextStyle(color: AppColors.textColor),
-            ),
+            leading: Icon(Icons.person, color: AppColors.textColor),
+            title: Text('Profile', style: TextStyle(color: AppColors.textColor)),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              Navigator.push(context, MaterialPageRoute(builder: (context) => DashboardPage(themeProvider: ThemeProvider()))
-              );
-              
+              Navigator.pop(context); // Close drawer
+              Navigator.pushNamed(context, '/profile'); // Pastikan route '/profile' didefinisikan di main.dart
             },
           ),
           ListTile(
             leading: Icon(Icons.settings, color: AppColors.textColor),
-            title: Text(
-              'Settings',
-              style: TextStyle(color: AppColors.textColor),
-            ),
+            title: Text('Settings', style: TextStyle(color: AppColors.textColor)),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Navigating to Settings...')),
-              );
-              // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+              Navigator.pop(context); // Close drawer
+              // Handle settings navigation
             },
           ),
-          const Divider(), // A visual divider
-
+          Divider(color: AppColors.textColor.withOpacity(0.5)), // Contoh divider
           ListTile(
-            leading: Icon(Icons.info, color: AppColors.textColor),
-            title: Text(
-              'About Us',
-              style: TextStyle(color: AppColors.textColor),
-            ),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Navigating to About Us...')),
-              );
+            leading: Icon(Icons.logout, color: AppColors.textColor),
+            title: Text('Logout', style: TextStyle(color: AppColors.textColor)),
+            onTap: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
             },
           ),
+          // Theme toggle (optional, if you want it in the drawer)
           ListTile(
-            leading: Icon(Icons.contact_mail, color: AppColors.textColor),
-            title: Text(
-              'Contact',
-              style: TextStyle(color: AppColors.textColor),
+            leading: Icon(
+              themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+              color: AppColors.textColor,
             ),
+            title: Text('Toggle Theme', style: TextStyle(color: AppColors.textColor)),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Navigating to Contact...')),
-              );
-            },
-          ),
-          // Optional: Logout button in drawer
-          ListTile(
-            leading: Icon(Icons.logout, color: Colors.redAccent), // Red accent for logout
-            title: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.redAccent),
-            ),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer first
-              // Implement actual logout logic here (clear session, navigate to login)
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen(themeProvider: ThemeProvider()))
-              );
+              themeProvider.toggleTheme(themeProvider.themeMode != ThemeMode.dark);
             },
           ),
         ],
       ),
     );
   }
+}
+
+class AppColors {
+  // Definisikan warna-warna yang digunakan di sini
+  static const Color primaryGreen = Color(0xFF4CAF50);
+  static const Color textColor = Color(0xFF333333);
+  static const Color backgroundColor = Colors.white; // atau warna lain yang Anda inginkan
 }

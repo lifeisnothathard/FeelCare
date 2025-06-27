@@ -93,13 +93,13 @@ class DashboardTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.cardBackground, // Background color adapts to theme
               borderRadius: BorderRadius.circular(16), // Rounded corners
-              border: Border.all(color: AppColors.textColor.withValues()), // Border changes with theme
+              border: Border.all(color: AppColors.textColor.withOpacity(0.5)),
             ),
             child: Center(
               child: Text(
                 'Chart Placeholder\n(Integration with a charting library like `fl_chart` would go here)',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textColor.withValues())), // Placeholder text color adapts
+                style: TextStyle(color: AppColors.textColor.withOpacity(0.7))),
               ),
             ),
           const SizedBox(height: 80), // Extra space at the bottom, useful for Floating Action Button
@@ -107,4 +107,13 @@ class DashboardTab extends StatelessWidget {
       ),
     );
   }
+}
+
+// (Assuming your AppColors class looks like this)
+class AppColors {
+  static const Color primary = Color(0xFF123456);
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  // ... other color definitions
+
+  static const Color textColor = Color(0xFF222222); // Add this line or adjust as needed
 }

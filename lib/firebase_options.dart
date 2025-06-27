@@ -50,7 +50,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAe-QWqliLVf5Hdoekr1GTxuoBVfAumclY',
+    apiKey: 'AIzaSyATmsrGYhb-h2rLYha1AzTkskmLwgbqZJk',
     appId: '1:244212724590:android:7b2600c0190ea8c436477f',
     messagingSenderId: '244212724590',
     projectId: 'feel-care-2e521',

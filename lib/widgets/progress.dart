@@ -56,3 +56,13 @@ class ProgressCard extends StatelessWidget {
     );
   }
 }
+
+// Existing color definitions
+class AppColors {
+  static const Color primaryColor = Color(0xFF123456);
+  static const Color textColor = Color(0xFF000000);
+  // Add other color definitions here
+
+  // Add this line for card background color
+  static const Color cardBackground = Color(0xFFFFFFFF); // Replace with your desired
+}

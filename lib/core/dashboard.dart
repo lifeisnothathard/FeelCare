@@ -1,15 +1,15 @@
+// lib/core/dashboard.dart
+import 'package:feelcare/tabs/habits_tab.dart'; // This will become HabitsTab
 import 'package:flutter/material.dart';
-import 'package:feelcare/drawer/side_dashboard.dart';
-import 'package:feelcare/habit_data/new_habit.dart';
-import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/drawer/side_dashboard.dart'; // Ensure this import is correct
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:feelcare/themes/theme_provider.dart';
-import 'package:feelcare/widgets/add_habit.dart';
+import 'package:feelcare/widgets/add_entry_dialog.dart';
 import 'package:feelcare/widgets/dashboard_tab.dart';
+import 'package:feelcare/themes/colors.dart'; // Import the consolidated AppColors
 
-// The main DashboardPage, acting as a container for tabs and overall structure.
 class DashboardPage extends StatefulWidget {
-  final ThemeProvider themeProvider; // Receive ThemeProvider instance
-
+  final ThemeProvider themeProvider;
   const DashboardPage({super.key, required this.themeProvider});
 
   @override
@@ -17,55 +17,67 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  void _showAddEntryDialog(BuildContext context) {
-    final Brightness _ = Theme.of(context).brightness;
+  User? _currentUser;
 
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
+    // Listen for auth state changes to update the UI if the user logs in/out
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+        });
+      }
+    });
+  }
+
+  void _showAddEntryDialog(BuildContext context) {
+    // This dialog will be enhanced later to include emotion and motivation inputs.
+    // For now, ensure it respects the theme.
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AddEntryDialog(
-          habitName: "Read a book", // Example: Pass actual habit name
-          dayNumber: "Day 8",       // Example: Pass actual day
-          icon: Icons.book,         // Example: Pass actual habit icon
-          iconColor: AppColors.darkGreen, // Pass theme-aware color
+          habitName: "Example Habit", // Replace with actual habit later
+          dayNumber: "Day 1", // Replace with actual day later
+          icon: Icons.run_circle, // Example icon
+          iconColor: Theme.of(context).colorScheme.primary, // Use theme primary color
         );
       },
     );
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
-    // Get the current theme's brightness. This will update when the theme changes.
-    final Brightness currentBrightness = Theme.of(context).brightness;
+    final user = _currentUser;
+    final displayEmail = user?.email ?? 'Loading...';
+    final displayName = user?.displayName ?? 'Loading...';
 
     return DefaultTabController(
-      length: 2, // Number of tabs
+      length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundColor, // Use theme-aware background
         appBar: AppBar(
-          // AppBar colors are now managed by ThemeData in main.dart, so we don't set them here.
-          // The title's text style also comes from AppBarTheme.
-          title: const Text('Flux'),
+          title: const Text('FeelCare'),
           actions: [
-            // Theme Toggle icon
             IconButton(
               icon: Icon(
-                currentBrightness == Brightness.light ? Icons.dark_mode : Icons.light_mode,
-                // Icon color is automatically set by AppBarTheme.foregroundColor
+                widget.themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
               ),
-              onPressed: widget.themeProvider.toggleTheme, // Call toggleTheme from provider
+              onPressed: () {
+                // PERHATIAN: Perbetulkan cara toggleTheme dipanggil
+                widget.themeProvider.toggleTheme(widget.themeProvider.themeMode != ThemeMode.dark);
+              },
               tooltip: 'Toggle Theme',
             )
           ],
-          // TabBar placed at the bottom of the AppBar for navigation
-          bottom: PreferredSize( // Removed 'const' keyword here
-            preferredSize: const Size.fromHeight(kToolbarHeight), // Standard height for tabs
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
             child: Align(
-              alignment: Alignment.centerLeft, // Align tabs to the left
-              child: TabBar( // Removed 'const' keyword here
-                isScrollable: true, // Allow tabs to scroll if many
-                // TabBar theme properties are now set globally in ThemeData,
-                // so no need to explicitly set indicatorColor, labelColor, etc. here.
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                isScrollable: true,
                 tabs: const [
                   Tab(text: 'Habits'),
                   Tab(text: 'Dashboard'),
@@ -74,17 +86,19 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-        drawer: const AppDrawer(), // Assign your reusable AppDrawer widget here
-        body: const TabBarView(
+        // ***** HANTAR THEMEPROVIDER SAHAJA KE APPDRAWER *****
+        drawer: AppDrawer(
+          themeProvider: widget.themeProvider, // <<< HANTAR THEMEPROVIDER SAHAJA
+        ),
+        body: TabBarView(
           children: [
-            HabitsTab(), // Content for the 'Habits' tab
-            DashboardTab(), // Content for the 'Dashboard' tab
+            HabitsTab(),
+            DashboardTab(),
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () => _showAddEntryDialog(context), // Call the dialog function
-          // FAB background and foreground colors are from FloatingActionButtonThemeData
-          child: const Icon(Icons.add, size: 30), // Plus icon
+          onPressed: () => _showAddEntryDialog(context),
+          child: const Icon(Icons.add, size: 30),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),

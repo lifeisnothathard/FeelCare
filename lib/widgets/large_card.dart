@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:feelcare/themes/colors.dart';
 
+// Add your color definitions here, for example:
+class AppColors {
+  static const Color primaryColor = Color(0xFF123456);
+  static const Color textColor = Color(0xFF000000);
+  static const Color cardBackground = Color(0xFFFFFFFF); // Define card background color
+  // Add more colors as needed
+}
+
 // A reusable widget to display a large progress card, typically for streaks or key metrics.
 class LargeProgressCard extends StatelessWidget {
   final IconData icon;
