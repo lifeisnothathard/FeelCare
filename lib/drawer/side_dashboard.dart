@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:feelcare/themes/theme_provider.dart';
-import 'package:feelcare/themes/colors.dart'; // Pastikan ini diimport
-import 'package:firebase_auth/firebase_auth.dart'; // Pastikan ini diimport
+import 'package:feelcare/themes/colors.dart'; // Ensure this is correctly imported
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AppDrawer extends StatelessWidget {
   final ThemeProvider themeProvider;
@@ -18,70 +18,73 @@ class AppDrawer extends StatelessWidget {
     final userEmail = user?.email ?? 'No email';
     final userName = user?.displayName ?? 'User';
 
+    // Get adaptive colors for the drawer
+    final Color drawerBackgroundColor = AppColors.getAdaptiveBackgroundColor(context);
+    final Color drawerTextColor = AppColors.getAdaptiveTextColor(context);
+    final Color drawerHeaderColor = Theme.of(context).colorScheme.primary; // Use theme primary
+
     return Drawer(
-      backgroundColor: AppColors.backgroundColor, // Gunakan AppColors dari themes/colors.dart
+      backgroundColor: drawerBackgroundColor, // Use adaptive background color
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: Text(userName), // Gunakan userName yang didapatkan di sini
-            accountEmail: Text(userEmail), // Gunakan userEmail yang didapatkan di sini
+            accountName: Text(userName, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)), // Use theme's onPrimary
+            accountEmail: Text(userEmail, style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.8))), // Use theme's onPrimary
             currentAccountPicture: user?.photoURL != null
                 ? CircleAvatar(
                     backgroundImage: NetworkImage(user!.photoURL!),
                   )
                 : CircleAvatar(
-                    backgroundColor: AppColors.primaryGreen, // Contoh warna latar belakang
+                    backgroundColor: Theme.of(context).colorScheme.secondary, // Use theme's secondary for placeholder
                     child: Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U', // Initial huruf pertama nama
-                      style: TextStyle(color: Colors.white, fontSize: 24),
+                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSecondary, fontSize: 24), // Use theme's onSecondary
                     ),
                   ),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen, // Gunakan warna tema untuk header
+              color: drawerHeaderColor, // Use theme primary color for header
             ),
           ),
           ListTile(
-            leading: Icon(Icons.home, color: AppColors.textColor), // Contoh warna icon
-            title: Text('Home', style: TextStyle(color: AppColors.textColor)),
+            leading: Icon(Icons.home, color: drawerTextColor),
+            title: Text('Home', style: TextStyle(color: drawerTextColor)),
             onTap: () {
-              Navigator.pop(context); // Close drawer
-              // Navigate to home page if not already there
-              // Navigator.pushReplacementNamed(context, '/home'); // Anda mungkin sudah di home, ini hanya contoh
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/home');
             },
           ),
           ListTile(
-            leading: Icon(Icons.person, color: AppColors.textColor),
-            title: Text('Profile', style: TextStyle(color: AppColors.textColor)),
+            leading: Icon(Icons.person, color: drawerTextColor),
+            title: Text('Profile', style: TextStyle(color: drawerTextColor)),
             onTap: () {
-              Navigator.pop(context); // Close drawer
-              Navigator.pushNamed(context, '/profile'); // Pastikan route '/profile' didefinisikan di main.dart
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/profile');
             },
           ),
           ListTile(
-            leading: Icon(Icons.settings, color: AppColors.textColor),
-            title: Text('Settings', style: TextStyle(color: AppColors.textColor)),
+            leading: Icon(Icons.settings, color: drawerTextColor),
+            title: Text('Settings', style: TextStyle(color: drawerTextColor)),
             onTap: () {
-              Navigator.pop(context); // Close drawer
+              Navigator.pop(context);
               // Handle settings navigation
             },
           ),
-          Divider(color: AppColors.textColor.withOpacity(0.5)), // Contoh divider
+          Divider(color: drawerTextColor.withOpacity(0.5)),
           ListTile(
-            leading: Icon(Icons.logout, color: AppColors.textColor),
-            title: Text('Logout', style: TextStyle(color: AppColors.textColor)),
+            leading: Icon(Icons.logout, color: drawerTextColor),
+            title: Text('Logout', style: TextStyle(color: drawerTextColor)),
             onTap: () async {
               await FirebaseAuth.instance.signOut();
               Navigator.of(context).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
             },
           ),
-          // Theme toggle (optional, if you want it in the drawer)
           ListTile(
             leading: Icon(
               themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
-              color: AppColors.textColor,
+              color: drawerTextColor,
             ),
-            title: Text('Toggle Theme', style: TextStyle(color: AppColors.textColor)),
+            title: Text('Toggle Theme', style: TextStyle(color: drawerTextColor)),
             onTap: () {
               themeProvider.toggleTheme(themeProvider.themeMode != ThemeMode.dark);
             },
@@ -90,11 +93,4 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
-}
-
-class AppColors {
-  // Definisikan warna-warna yang digunakan di sini
-  static const Color primaryGreen = Color(0xFF4CAF50);
-  static const Color textColor = Color(0xFF333333);
-  static const Color backgroundColor = Colors.white; // atau warna lain yang Anda inginkan
 }

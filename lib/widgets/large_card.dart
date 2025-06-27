@@ -1,13 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:feelcare/themes/colors.dart';
+// lib/widgets/large_card.dart
 
-// Add your color definitions here, for example:
-class AppColors {
-  static const Color primaryColor = Color(0xFF123456);
-  static const Color textColor = Color(0xFF000000);
-  static const Color cardBackground = Color(0xFFFFFFFF); // Define card background color
-  // Add more colors as needed
-}
+import 'package:flutter/material.dart';
+import 'package:feelcare/themes/colors.dart'; // Ensure this is correctly imported
 
 // A reusable widget to display a large progress card, typically for streaks or key metrics.
 class LargeProgressCard extends StatelessWidget {
@@ -27,7 +21,7 @@ class LargeProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.cardBackground, // Use defined card background color
+      color: AppColors.getAdaptiveCardBackground(context), // Use adaptive card background color
       elevation: 0, // No shadow
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16), // Rounded corners
@@ -45,16 +39,16 @@ class LargeProgressCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[600], // Grey text for title
+                    color: AppColors.getAdaptiveTextColor(context).withOpacity(0.7), // Use adaptive text color with opacity
                   ),
                 ),
                 const SizedBox(height: 4), // Spacing
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle( // Changed to TextStyle to apply adaptive color
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textColor, // Use defined text color
+                    color: AppColors.getAdaptiveTextColor(context), // Use adaptive text color
                   ),
                 ),
               ],
