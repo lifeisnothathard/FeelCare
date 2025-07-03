@@ -6,6 +6,9 @@ plugins {
 }
 
 android {
+    defaultConfig {
+        minSdkVersion 21 // Required for biometrics
+    }
     namespace = "com.example.feelcare"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -42,3 +45,10 @@ android {
 flutter {
     source = "../.."
 }
+
+apply(plugin = "com.google.gms.google-services")
+
+dependencies {
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+}
+

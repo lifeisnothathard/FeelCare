@@ -1,5 +1,7 @@
+// lib/widgets/progress.dart
+
 import 'package:flutter/material.dart';
-import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart'; // Ensure this is correctly imported
 
 //This widget will be used for the small progress cards (Success Rate, Total Entries, Positive Days, Negative Days).
 // A reusable widget to display a small progress card with an icon, title, and value.
@@ -21,7 +23,7 @@ class ProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.cardBackground, // Use defined card background color
+      color: AppColors.getAdaptiveCardBackground(context), // Use adaptive card background color
       elevation: 0, // No shadow for a flat design
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16), // Rounded corners
@@ -38,16 +40,16 @@ class ProgressCard extends StatelessWidget {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600], // Grey text for title
+                color: AppColors.getAdaptiveTextColor(context).withOpacity(0.7), // Use adaptive text color with opacity
               ),
             ),
             const SizedBox(height: 4), // Spacing
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle( // Changed to TextStyle to apply adaptive color
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textColor, // Use defined text color
+                color: AppColors.getAdaptiveTextColor(context), // Use adaptive text color
               ),
             ),
           ],

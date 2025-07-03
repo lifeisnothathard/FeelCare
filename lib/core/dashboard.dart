@@ -1,15 +1,20 @@
+// lib/core/dashboard/dashboard.dart
+
 import 'package:flutter/material.dart';
-import 'package:feelcare/drawer/side_dashboard.dart';
-import 'package:feelcare/habit_data/new_habit.dart';
-import 'package:feelcare/themes/colors.dart';
+import 'package:provider/provider.dart'; // Import provider package
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:feelcare/themes/theme_provider.dart';
-import 'package:feelcare/widgets/add_habit.dart';
+import 'package:feelcare/themes/colors.dart'; // <<< CORRECT IMPORT FOR APPCOLORS
 import 'package:feelcare/widgets/dashboard_tab.dart';
+import 'package:feelcare/habit_data/new_habit.dart'; // This is your HabitsTab, ensure path is correct
+import 'package:feelcare/drawer/side_dashboard.dart'; // AppDrawer
 
-// The main DashboardPage, acting as a container for tabs and overall structure.
+// New Imports for Habit/Mood Tracking
+import 'package:feelcare/widgets/add_habit_mood_dialog.dart'; // <<< NEW DIALOG IMPORT
+import 'package:feelcare/services/habit_mood_service.dart'; // <<< NEW SERVICE IMPORT
+
 class DashboardPage extends StatefulWidget {
-  final ThemeProvider themeProvider; // Receive ThemeProvider instance
-
+  final ThemeProvider themeProvider;
   const DashboardPage({super.key, required this.themeProvider});
 
   @override
@@ -17,56 +22,66 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  void _showAddEntryDialog(BuildContext context) {
-    final Brightness _ = Theme.of(context).brightness;
+  User? _currentUser;
 
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+        });
+      }
+    });
+  }
+
+  // Update this method to show the new dialog
+  void _showAddEntryDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AddEntryDialog(
-          habitName: "Read a book", // Example: Pass actual habit name
-          dayNumber: "Day 8",       // Example: Pass actual day
-          icon: Icons.book,         // Example: Pass actual habit icon
-          iconColor: AppColors.darkGreen, // Pass theme-aware color
-        );
+        return const AddHabitMoodDialog(); // <<< Use the new dialog (no longer AddEntryDialog)
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the current theme's brightness. This will update when the theme changes.
-    final Brightness currentBrightness = Theme.of(context).brightness;
+    // These are no longer passed to AppDrawer, but can be kept for other uses if needed
+    // String displayName = _currentUser?.displayName ?? 'User';
+    // String displayEmail = _currentUser?.email ?? 'No email';
 
     return DefaultTabController(
-      length: 2, // Number of tabs
+      length: 2, // You have 'Habits' and 'Dashboard' tabs
       child: Scaffold(
-        backgroundColor: AppColors.backgroundColor, // Use theme-aware background
+        backgroundColor: AppColors.getAdaptiveBackgroundColor(context), // <<< Use adaptive background color
         appBar: AppBar(
-          // AppBar colors are now managed by ThemeData in main.dart, so we don't set them here.
-          // The title's text style also comes from AppBarTheme.
-          title: const Text('Flux'),
+          title: const Text('FeelCare'),
+          backgroundColor: Theme.of(context).colorScheme.primary, // Use theme's primary color
           actions: [
-            // Theme Toggle icon
             IconButton(
               icon: Icon(
-                currentBrightness == Brightness.light ? Icons.dark_mode : Icons.light_mode,
-                // Icon color is automatically set by AppBarTheme.foregroundColor
+                widget.themeProvider.themeMode == ThemeMode.dark
+                    ? Icons.dark_mode
+                    : Icons.light_mode,
               ),
-              onPressed: widget.themeProvider.toggleTheme, // Call toggleTheme from provider
+              onPressed: () {
+                // Correct way to toggle theme
+                widget.themeProvider.toggleTheme(
+                    widget.themeProvider.themeMode == ThemeMode.light); // <<< CORRECTED TOGGLE LOGIC
+              },
               tooltip: 'Toggle Theme',
             )
           ],
-          // TabBar placed at the bottom of the AppBar for navigation
-          bottom: PreferredSize( // Removed 'const' keyword here
-            preferredSize: const Size.fromHeight(kToolbarHeight), // Standard height for tabs
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(kToolbarHeight),
             child: Align(
-              alignment: Alignment.centerLeft, // Align tabs to the left
-              child: TabBar( // Removed 'const' keyword here
-                isScrollable: true, // Allow tabs to scroll if many
-                // TabBar theme properties are now set globally in ThemeData,
-                // so no need to explicitly set indicatorColor, labelColor, etc. here.
-                tabs: const [
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                isScrollable: true,
+                tabs: [
                   Tab(text: 'Habits'),
                   Tab(text: 'Dashboard'),
                 ],
@@ -74,17 +89,23 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-        drawer: const AppDrawer(), // Assign your reusable AppDrawer widget here
-        body: const TabBarView(
-          children: [
-            HabitsTab(), // Content for the 'Habits' tab
-            DashboardTab(), // Content for the 'Dashboard' tab
-          ],
+        // ***** HANTAR THEMEPROVIDER SAHAJA KE APPDRAWER *****
+        drawer: AppDrawer(
+          // REMOVED userEmail and userName parameters as AppDrawer no longer needs them
+          themeProvider: widget.themeProvider, // <<< HANTAR THEMEPROVIDER SAHAJA
+        ),
+        body: Provider<HabitMoodService>( // <<< WRAP WITH PROVIDER HERE
+          create: (_) => HabitMoodService(),
+          child: const TabBarView(
+            children: [
+              HabitsTab(),
+              DashboardTab(),
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () => _showAddEntryDialog(context), // Call the dialog function
-          // FAB background and foreground colors are from FloatingActionButtonThemeData
-          child: const Icon(Icons.add, size: 30), // Plus icon
+          onPressed: () => _showAddEntryDialog(context),
+          child: const Icon(Icons.add, size: 30),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       ),
