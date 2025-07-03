@@ -277,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background, // Use theme background color
+      backgroundColor: colorScheme.surface, // Use theme background color
       appBar: AppBar(
         title: Text('Login', style: textTheme.headlineSmall?.copyWith(color: colorScheme.onPrimary)),
         backgroundColor: colorScheme.primary,

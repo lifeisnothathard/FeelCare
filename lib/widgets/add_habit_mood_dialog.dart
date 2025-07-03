@@ -21,7 +21,7 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
   final TextEditingController _newHabitNameController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
-  List<String> _selectedEmotions = [];
+  final List<String> _selectedEmotions = [];
   int? _moodRating;
   String? _selectedHabitId;
   String? _selectedHabitName; // To display selected habit name

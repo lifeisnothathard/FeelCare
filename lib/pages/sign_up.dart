@@ -94,7 +94,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text('Sign Up', style: textTheme.headlineSmall?.copyWith(color: colorScheme.onPrimary)),
         backgroundColor: colorScheme.primary,
