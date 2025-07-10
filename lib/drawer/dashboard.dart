@@ -5,7 +5,7 @@ import 'package:provider/provider.dart'; // Import provider package
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:feelcare/themes/theme_provider.dart';
 import 'package:feelcare/themes/colors.dart'; // <<< CORRECT IMPORT FOR APPCOLORS
-import 'package:feelcare/widgets/dashboard_tab.dart';
+import 'package:feelcare/pages/dashboard_tab.dart';
 import 'package:feelcare/habit_data/new_habit.dart'; // This is your HabitsTab, ensure path is correct
 import 'package:feelcare/drawer/side_dashboard.dart'; // AppDrawer
 
@@ -56,10 +56,13 @@ class _DashboardPageState extends State<DashboardPage> {
     return DefaultTabController(
       length: 2, // You have 'Habits' and 'Dashboard' tabs
       child: Scaffold(
-        backgroundColor: AppColors.getAdaptiveBackgroundColor(context), // <<< Use adaptive background color
+        backgroundColor: AppColors.getAdaptiveBackgroundColor(
+            context), // <<< Use adaptive background color
         appBar: AppBar(
           title: const Text('FeelCare'),
-          backgroundColor: Theme.of(context).colorScheme.primary, // Use theme's primary color
+          backgroundColor: Theme.of(context)
+              .colorScheme
+              .primary, // Use theme's primary color
           actions: [
             IconButton(
               icon: Icon(
@@ -70,7 +73,8 @@ class _DashboardPageState extends State<DashboardPage> {
               onPressed: () {
                 // Correct way to toggle theme
                 widget.themeProvider.toggleTheme(
-                    widget.themeProvider.themeMode == ThemeMode.light); // <<< CORRECTED TOGGLE LOGIC
+                    widget.themeProvider.themeMode ==
+                        ThemeMode.light); // <<< CORRECTED TOGGLE LOGIC
               },
               tooltip: 'Toggle Theme',
             )
@@ -92,9 +96,11 @@ class _DashboardPageState extends State<DashboardPage> {
         // ***** HANTAR THEMEPROVIDER SAHAJA KE APPDRAWER *****
         drawer: AppDrawer(
           // REMOVED userEmail and userName parameters as AppDrawer no longer needs them
-          themeProvider: widget.themeProvider, // <<< HANTAR THEMEPROVIDER SAHAJA
+          themeProvider:
+              widget.themeProvider, // <<< HANTAR THEMEPROVIDER SAHAJA
         ),
-        body: Provider<HabitMoodService>( // <<< WRAP WITH PROVIDER HERE
+        body: Provider<HabitMoodService>(
+          // <<< WRAP WITH PROVIDER HERE
           create: (_) => HabitMoodService(),
           child: const TabBarView(
             children: [

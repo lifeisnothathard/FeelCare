@@ -1,5 +1,5 @@
 // lib/main.dart
-import 'package:feelcare/core/dashboard.dart';
+import 'package:feelcare/drawer/dashboard.dart';
 import 'package:feelcare/pages/home_page.dart';
 import 'package:feelcare/pages/login.dart';
 import 'package:feelcare/pages/sign_up.dart';
@@ -16,7 +16,6 @@ import 'package:feelcare/themes/colors.dart'; // Import our consolidated AppColo
 import 'package:feelcare/themes/light_mode.dart'; // Import light mode theme
 import 'package:feelcare/themes/dark_mode.dart'; // Import dark mode theme
 import 'package:feelcare/pages/profile_screen.dart'; // Import ProfileScreen widget
-import 'package:feelcare/pages/dashboard_page.dart'; // Import DashboardPage widget
 
 // Define AppColors if not already defined elsewhere
 class AppColors {
@@ -31,7 +30,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // Add this line
   );
-  
+
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
 

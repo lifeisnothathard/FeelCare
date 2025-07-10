@@ -28,6 +28,7 @@ dependencies:
   cloud_firestore: 5.6.9 # <<< ADD THIS LINE
   table_calendar: ^3.0.9 # We'll need this later for the calendar
   flutter_local_notifications: ^17.0.0 # We'll need this later for notifications
+  intl: ^0.20.2
 
 
 dev_dependencies:
