@@ -75,19 +75,19 @@ class _DashboardPageState extends State<DashboardPage> {
               tooltip: 'Toggle Theme',
             )
           ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(kToolbarHeight),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TabBar(
-                isScrollable: true,
-                tabs: [
-                  Tab(text: 'Habits'),
-                  Tab(text: 'Dashboard'),
-                ],
-              ),
-            ),
+          // --- MODIFICATION STARTS HERE ---
+          bottom: const TabBar( // DIRECTLY USE TABBAR
+            isScrollable: true,
+            indicatorColor: Colors.yellow, // Indikator akan berwarna kuning terang
+            indicatorWeight: 5.0,        // Buat indikator lebih tebal
+            labelColor: Colors.white,    // Warna teks untuk tab yang dipilih
+            unselectedLabelColor: Colors.black54,
+            tabs: [
+              Tab(text: 'Habits'),
+              Tab(text: 'Dashboard'),
+            ],
           ),
+          // --- MODIFICATION ENDS HERE ---
         ),
         // ***** HANTAR THEMEPROVIDER SAHAJA KE APPDRAWER *****
         drawer: AppDrawer(

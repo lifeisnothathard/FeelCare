@@ -54,26 +54,50 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
     }
   }
 
+  void _showEmotionWarningDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Missing Selection'),
+          content: const Text('Please select at least one emotion.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the warning dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _saveEntry() async {
     // Validate all form fields
     if (!_formKey.currentState!.validate()) {
+      print('[_saveEntry] - Form validation failed.');
       return;
     }
 
     // Manual validation for emotion selection
     if (_selectedEmotions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one emotion.')),
-      );
+      print('[_saveEntry] - No emotions selected. Showing warning dialog.');
+      _showEmotionWarningDialog();
       return; // Stop if no emotion is selected
     }
 
+    print('[_saveEntry] - Starting save process.');
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User not logged in.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: User not logged in.')),
+        );
+      }
+      print('[_saveEntry] - User not logged in. Aborting.');
       return;
     }
 
@@ -82,37 +106,37 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
     try {
       String? finalHabitId = _selectedHabitId;
       String? finalHabitName = _selectedHabitName;
-      bool? finalHabitCompleted = _selectedHabitId != null ? true : null; // Default: if habit selected, mark as complete
+      bool? finalHabitCompleted = _selectedHabitId != null ? true : null;
 
-      // Handle adding a new habit if selected
       if (_isNewHabit && _newHabitNameController.text.isNotEmpty) {
         final newHabit = Habit(
           userId: userId,
           name: _newHabitNameController.text.trim(),
           creationDate: DateTime.now(),
-          frequency: 'daily', // Default, can be expanded later
-          goal: '1 time a day', // Default, can be expanded later
+          frequency: 'daily',
+          goal: '1 time a day',
         );
-        // Add the new habit and get its ID from Firestore
-        // Note: The addHabit method currently doesn't return the ID.
-        // If you need to link this mood entry to the newly created habit as its *first* completion,
-        // you'd need to modify addHabit to return the doc ID.
-        // For now, it just creates the habit separately.
+        print('[_saveEntry] - Adding new habit: ${newHabit.name}');
         await habitMoodService.addHabit(newHabit);
-
-        // If a new habit is added, this mood entry is NOT marking it complete
-        // unless you explicitly want it to. Based on your previous comments,
-        // we'll keep it as separate for now.
         finalHabitId = null;
         finalHabitName = null;
         finalHabitCompleted = null;
+        print('[_saveEntry] - New habit added. Resetting habit data for mood entry.');
+      } else if (!_isNewHabit && _selectedHabitId == null) {
+          if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('Please select an existing habit or add a new one.')),
+             );
+          }
+          print('[_saveEntry] - No existing habit selected. Aborting.');
+          return;
       }
 
 
       final moodEntry = MoodEntry(
         userId: userId,
         date: _selectedDate,
-        moodRating: _moodRating, // This is currently unused, consider adding UI for it.
+        moodRating: _moodRating,
         selectedEmotions: _selectedEmotions,
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         habitId: finalHabitId,
@@ -120,29 +144,41 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
         habitCompleted: finalHabitCompleted,
       );
 
+      print('[_saveEntry] - Attempting to add mood entry...');
       await habitMoodService.addMoodEntry(moodEntry);
+      print('[_saveEntry] - Mood entry added successfully!');
 
+      // --- CRITICAL CHANGE: Using rootNavigator: true ---
       if (mounted) {
+        print('[_saveEntry] - Context is mounted. Attempting to pop dialog from rootNavigator.');
+        Navigator.of(context, rootNavigator: true).pop(); // <--- THIS IS THE KEY CHANGE
+        print('[_saveEntry] - Dialog pop initiated (rootNavigator).');
+
+        // Show success message AFTER the dialog has been told to close
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Entry saved successfully!')),
         );
-        Navigator.of(context).pop(); // Close the dialog
+        print('[_saveEntry] - Success SnackBar shown.');
+      } else {
+        print('[_saveEntry] - Context is NOT mounted after save. Cannot pop dialog or show SnackBar.');
       }
+      // --- END CRITICAL CHANGE ---
+
     } catch (e) {
+      print('[_saveEntry] - Error saving entry: $e');
       if (mounted) {
+        // Ensure error message is still visible
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to save entry: $e')),
         );
       }
     }
+    print('[_saveEntry] - Save process finished.');
   }
 
   @override
   Widget build(BuildContext context) {
-    // Access the service to get habits
     final habitMoodService = Provider.of<HabitMoodService>(context);
-
-    // Get primary color from theme for ChoiceChip's selectedColor
     final Color selectedChipColor = Theme.of(context).colorScheme.primary;
 
     return AlertDialog(
@@ -186,16 +222,6 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
                   );
                 }).toList(),
               ),
-              // No need for explicit error text here, as validation is in _saveEntry
-              // if (_selectedEmotions.isEmpty)
-              //   Padding(
-              //     padding: const EdgeInsets.only(top: 8.0),
-              //     child: Text(
-              //       'Please select at least one emotion.',
-              //       style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
-              //     ),
-              //   ),
-
               const SizedBox(height: 24),
 
               // Habit Section
@@ -315,7 +341,10 @@ class _AddHabitMoodDialogState extends State<AddHabitMoodDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            print('[_AddHabitMoodDialogState] - Cancel button pressed. Popping dialog from rootNavigator.');
+            Navigator.of(context, rootNavigator: true).pop(); // <--- Also add rootNavigator: true here
+          },
           child: const Text('Cancel'),
         ),
         ElevatedButton(

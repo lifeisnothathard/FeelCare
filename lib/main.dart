@@ -16,7 +16,6 @@ import 'package:feelcare/themes/colors.dart'; // Import our consolidated AppColo
 import 'package:feelcare/themes/light_mode.dart'; // Import light mode theme
 import 'package:feelcare/themes/dark_mode.dart'; // Import dark mode theme
 import 'package:feelcare/pages/profile_screen.dart'; // Import ProfileScreen widget
-import 'package:feelcare/pages/dashboard_page.dart'; // Import DashboardPage widget
 
 // Define AppColors if not already defined elsewhere
 class AppColors {
