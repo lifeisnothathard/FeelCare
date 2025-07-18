@@ -1,5 +1,5 @@
 // lib/main.dart
-import 'package:feelcare/core/dashboard.dart';
+import 'package:feelcare/drawer/dashboard.dart';
 import 'package:feelcare/pages/home_page.dart';
 import 'package:feelcare/pages/login.dart';
 import 'package:feelcare/pages/sign_up.dart';
@@ -30,7 +30,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // Add this line
   );
-  
+
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
 
