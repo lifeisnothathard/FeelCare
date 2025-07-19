@@ -42,7 +42,7 @@ class _DashboardPageState extends State<DashboardPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return const AddHabitMoodDialog(); // <<< Use the new dialog (no longer AddEntryDialog)
+        return const AddHabitMoodDialog(); // call AddHabitMoodDialog directly
       },
     );
   }

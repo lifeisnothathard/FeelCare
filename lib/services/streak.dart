@@ -53,7 +53,7 @@ class StreakService {
       }
 
       // 2. Check if the last activity was exactly yesterday (consecutive day)
-      final DateTime lastActivityDate = DateTime.parse(lastActivityDateString);
+      //final DateTime lastActivityDate = DateTime.parse(lastActivityDateString);
       final DateTime yesterday = now.subtract(const Duration(days: 1));
       final String yesterdayFormatted = _formatDate(yesterday);
 
