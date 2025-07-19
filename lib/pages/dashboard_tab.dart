@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:feelcare/themes/colors.dart'; // Correct import
 import 'package:feelcare/widgets/large_card.dart';
 import 'package:feelcare/widgets/progress.dart';
+import 'package:provider/provider.dart'; // Import Provider for HabitMoodService
+import 'package:feelcare/services/habit_mood_service.dart'; // Import your service
+import 'package:feelcare/models/mood_entry.dart'; // Import your MoodEntry model
+
 
 // Represents the content for the 'Dashboard' tab.
 class DashboardTab extends StatefulWidget {
@@ -16,32 +20,72 @@ class DashboardTab extends StatefulWidget {
 class _DashboardTabState extends State<DashboardTab> {
   int _currentStreak = 0;
   int _longestStreak = 0;
-  bool _isLoadingStreak = true; // To show loading state for streak data
+  int _positiveDays = 0; // New state variable for positive days
+  int _entriesThisMonth = 0; // New state variable for entries this month
+  bool _isLoadingDashboard = true; // Renamed to reflect loading all dashboard data
 
   @override
   void initState() {
     super.initState();
-    _loadStreakData();
+    // Ensure context is available before calling Provider.of
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDashboardData();
+    });
   }
 
-  Future<void> _loadStreakData() async {
+  Future<void> _loadDashboardData() async {
     setState(() {
-      _isLoadingStreak = true; // Show loading indicator
+      _isLoadingDashboard = true; // Show loading indicator for all data
     });
 
-    // Call updateStreak to ensure today's activity is counted
-    // This will also return the latest current and longest streaks
-    final Map<String, int> streakData = await StreakService.updateStreak();
-
-    setState(() {
+    try {
+      // Fetch streak data
+      final Map<String, int> streakData = await StreakService.updateStreak();
       _currentStreak = streakData['currentStreak'] ?? 0;
       _longestStreak = streakData['longestStreak'] ?? 0;
-      _isLoadingStreak = false; // Hide loading indicator
-    });
+
+      // Access HabitMoodService to fetch mood entries
+      final habitMoodService = Provider.of<HabitMoodService>(context, listen: false);
+      List<MoodEntry> moodEntries = await habitMoodService.getAllMoodEntriesForUser().first;
+
+      int positiveCount = 0;
+      int entriesCountThisMonth = 0;
+      final now = DateTime.now();
+      final currentMonth = now.month;
+      final currentYear = now.year;
+
+      for (var entry in moodEntries) {
+        // Assuming a moodRating of 3 or higher (out of 5) is considered positive
+        if (entry.moodRating != null && entry.moodRating! >= 3) {
+          positiveCount++;
+        }
+
+        // Check if the entry date is within the current month and year
+        if (entry.date.month == currentMonth && entry.date.year == currentYear) {
+          entriesCountThisMonth++;
+        }
+      }
+
+      setState(() {
+        _positiveDays = positiveCount;
+        _entriesThisMonth = entriesCountThisMonth;
+        _isLoadingDashboard = false; // Hide loading indicator after all data is loaded
+      });
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+      setState(() {
+        _isLoadingDashboard = false; // Hide loading indicator even on error
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // habitMoodService is now accessed within _loadDashboardData,
+    // so this line is no longer strictly necessary here unless other UI elements
+    // within build() directly consume it. For now, it's commented out.
+    // final habitMoodService = Provider.of<HabitMoodService>(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -60,7 +104,7 @@ class _DashboardTabState extends State<DashboardTab> {
           const SizedBox(height: 16), // Spacing below title
 
           // Grid for "Overall Progress" cards (2x2 layout)
-          _isLoadingStreak
+          _isLoadingDashboard // Use the new loading variable
               ? Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -80,11 +124,11 @@ class _DashboardTabState extends State<DashboardTab> {
                       title: 'Habits Completed',
                       value: '0', // This will be dynamic later
                     ),
-                    const ProgressCard(
+                    ProgressCard(
                       icon: Icons.mood,
                       iconColor: Colors.blueAccent,
                       title: 'Positive Days',
-                      value: '0', // This will be dynamic later
+                      value: '$_positiveDays', // Dynamic positive days
                     ),
                     ProgressCard(
                       icon: Icons.trending_up,
@@ -92,18 +136,18 @@ class _DashboardTabState extends State<DashboardTab> {
                       title: 'Current Streak',
                       value: '$_currentStreak days', // Dynamic current streak
                     ),
-                    const ProgressCard(
+                    ProgressCard(
                       icon: Icons.calendar_today,
                       iconColor: Colors.purple,
                       title: 'Entries This Month',
-                      value: '0', // This will be dynamic later
+                      value: '$_entriesThisMonth', // Dynamic entries this month
                     ),
                   ],
                 ),
           const SizedBox(height: 32),
 
           // Large Card Placeholder for Longest Streak
-          _isLoadingStreak
+          _isLoadingDashboard // Use the new loading variable
               ? const SizedBox.shrink() // Hide if loading
               : LargeProgressCard(
                   icon: Icons.star,
@@ -111,39 +155,11 @@ class _DashboardTabState extends State<DashboardTab> {
                   title: 'Longest Streak',
                   value: '$_longestStreak days', // Dynamic longest streak
                 ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 32), // Add spacing before new section
 
-          Text(
-            'Success Rate by Habit',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.getAdaptiveTextColor(context),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.getAdaptiveCardBackground(
-                  context), // Background color adapts
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                  color: AppColors.getAdaptiveTextColor(context)
-                      .withOpacity(0.2)), // Border changes with theme
-            ),
-            child: Center(
-              child: Text(
-                'Chart Placeholder\n(Integration with a charting library like `fl_chart` would go here)',
-                textAlign: TextAlign.center,
-                style:
-                    TextStyle(color: AppColors.getAdaptiveTextColor(context)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 80),
+          // If you still need space at the bottom for other elements or general padding,
+          // you can add a SizedBox here, otherwise, it's removed with the journal entries.
+          // const SizedBox(height: 32), // Example: Add general bottom spacing if needed
         ],
       ),
     );

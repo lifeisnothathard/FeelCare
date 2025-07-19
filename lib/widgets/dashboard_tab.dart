@@ -75,35 +75,7 @@ class DashboardTab extends StatelessWidget {
             title: 'Longest Streak',
             value: '0 days (example)',
           ),
-          const SizedBox(height: 32),
-
-          Text(
-            'Success Rate by Habit',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.getAdaptiveTextColor(context),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.getAdaptiveCardBackground(context), // Background color adapts
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.getAdaptiveTextColor(context).withOpacity(0.2)), // Border changes with theme
-            ),
-            child: Center(
-              child: Text(
-                'Chart Placeholder\n(Integration with a charting library like `fl_chart` would go here)',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.getAdaptiveTextColor(context)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32), // Add spacing before new section
+          // Removed: const SizedBox(height: 32), // This SizedBox was the one after the chart placeholder, now keeping one for consistency if needed between Longest Streak and Recent Journal Entries.
 
           // --- NEW SECTION: JOURNAL ENTRIES ---
           Text(
