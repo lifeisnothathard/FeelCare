@@ -1,3 +1,4 @@
+
 // lib/models/mood_entry.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';

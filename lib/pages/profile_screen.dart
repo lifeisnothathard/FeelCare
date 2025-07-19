@@ -2,7 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/profile_service.dart';
+import '../services/profile_service.dart'; // Ensure ProfileService handles Firebase Storage and Auth updates
 import '../themes/theme_provider.dart';
 import 'package:feelcare/themes/colors.dart'; // Import AppColors
 
@@ -22,34 +22,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeProfileData();
+  }
+
+  void _initializeProfileData() {
     final user = FirebaseAuth.instance.currentUser;
     _nameController.text = user?.displayName ?? '';
   }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    XFile? image; // Declare image here
+
+    print('ProfileScreen: Attempting to pick image from gallery...');
+    try {
+      image = await picker.pickImage(source: ImageSource.gallery);
+      print('ProfileScreen: ImagePicker returned.'); // Debug print after picker call
+    } catch (e) {
+      print('ProfileScreen: Error during image picking: $e'); // Catch errors from picker itself
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error accessing gallery: $e')),
+        );
+      }
+      setState(() => _isLoading = false); // Ensure loading is off if picker fails
+      return; // Exit if image picking fails
+    }
 
     if (image != null) {
       setState(() => _isLoading = true); // Show loading indicator
+      print('ProfileScreen: Image selected: ${image.path}'); // Debug print
 
       try {
         final photoUrl = await ProfileService.uploadProfilePicture(image);
+        print('ProfileScreen: Uploaded photo URL from service: $photoUrl'); // Debug print
+
         if (photoUrl != null) {
           await ProfileService.updateUserProfile(
               photoUrl, null); // Update photo URL in Firebase Auth
 
-          // IMPORTANT FIX: Reload the current user to get the updated photoURL
+          // IMPORTANT: Reload the current user to get the updated photoURL
+          // This ensures FirebaseAuth.instance.currentUser reflects the latest data.
           await FirebaseAuth.instance.currentUser?.reload();
-          // After reloading, get the refreshed user object for the UI to pick it up.
-          // This will trigger a rebuild when _isLoading becomes false.
-          // You don't necessarily need to explicitly re-fetch `user = FirebaseAuth.instance.currentUser;`
-          // here if your `build` method relies on `FirebaseAuth.instance.currentUser` directly.
+          final updatedUser = FirebaseAuth.instance.currentUser; // Get the reloaded user
+          print('ProfileScreen: User photoURL after reload: ${updatedUser?.photoURL}'); // Debug print
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Profile picture updated successfully')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Failed to get photo URL after upload.')),
             );
           }
         }
@@ -59,12 +87,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SnackBar(content: Text('Error uploading picture: $e')),
           );
         }
+        print('ProfileScreen: Error during image pick/upload: $e'); // Debug print
       } finally {
         if (mounted) {
           // Hide loading indicator and trigger a UI rebuild to show updated image
           setState(() => _isLoading = false);
         }
       }
+    } else {
+      print('ProfileScreen: Image picking cancelled.'); // Debug print
+      setState(() => _isLoading = false); // Ensure loading is off if cancelled
     }
   }
 
@@ -75,6 +107,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         null, // Photo is handled by _pickImage separately
         _nameController.text, // Update display name from text field
       );
+      // IMPORTANT: Reload the current user to get the updated display name
+      await FirebaseAuth.instance.currentUser?.reload();
+      final updatedUser = FirebaseAuth.instance.currentUser; // Get the reloaded user
+      print('ProfileScreen: User display name after reload: ${updatedUser?.displayName}'); // Debug print
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),
@@ -86,6 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(content: Text('Error updating profile: $e')),
         );
       }
+      print('ProfileScreen: Error during profile update: $e'); // Debug print
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -99,9 +137,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the latest user object every time build is called
+    // This is crucial for reflecting changes from _pickImage or _updateProfile
     final user = FirebaseAuth.instance.currentUser;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    // Add this debug print to see the photoURL being used by CircleAvatar
+    print('ProfileScreen Build: Current user photoURL: ${user?.photoURL}');
 
     return Scaffold(
       backgroundColor: colorScheme.surface, // Use theme background color
@@ -160,9 +203,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Text(
                     'Hi, ${user?.displayName ?? 'User'}!',
-                    style: const TextStyle(
+                    style: TextStyle( // Use theme's text style
                       fontSize: 22.0,
                       fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16.0),
@@ -192,19 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Row(
                     children: [
-                      Expanded(
-                        child: TextButton.icon(
-                          onPressed: () {
-                            // Handle add account (e.g., navigate to login/signup)
-                          },
-                          icon: const Icon(Icons.add, color: Colors.black54),
-                          label: const Text(
-                            'Add account',
-                            style: TextStyle(color: Colors.black87),
-                          ),
-                        ),
-                      ),
-                      Expanded(
+                      Expanded( // Keep this expanded if you want the Sign out button to take full width
                         child: TextButton.icon(
                           onPressed: () async {
                             // Handle sign out
@@ -214,14 +246,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 const SnackBar(
                                     content: Text('Signed out successfully')),
                               );
-                              // You might want to navigate to the login screen after sign out
-                              // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => LoginPage()));
+                              // Navigate to the login screen after sign out
+                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
                             }
                           },
-                          icon: const Icon(Icons.logout, color: Colors.black54),
-                          label: const Text(
+                          icon: Icon(Icons.logout, color: colorScheme.error), // Use error color for logout
+                          label: Text(
                             'Sign out',
-                            style: TextStyle(color: Colors.black87),
+                            style: textTheme.bodyMedium?.copyWith(color: colorScheme.error), // Use error color for text
                           ),
                         ),
                       ),
@@ -233,7 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Save Profile Button (original)
                   ElevatedButton(
-                    onPressed: _updateProfile,
+                    onPressed: _isLoading ? null : _updateProfile, // Disable button while loading
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colorScheme.primary,
                       foregroundColor: colorScheme.onPrimary,
@@ -243,7 +275,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text('Save Profile', style: textTheme.titleMedium),
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: colorScheme.onPrimary) // Show loading on button
+                        : Text('Save Profile', style: textTheme.titleMedium),
                   ),
                 ],
               ),

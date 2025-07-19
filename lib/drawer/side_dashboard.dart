@@ -1,3 +1,4 @@
+// lib/drawer/side_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:feelcare/themes/theme_provider.dart';
 import 'package:feelcare/themes/colors.dart'; // Ensure this is correctly imported
@@ -8,7 +9,7 @@ class AppDrawer extends StatelessWidget {
 
   const AppDrawer({
     super.key,
-    required this.themeProvider,  // HANYA themeProvider yang diperlukan di sini
+    required this.themeProvider, // HANYA themeProvider yang diperlukan di sini
   });
 
   @override
@@ -62,15 +63,16 @@ class AppDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/profile');
             },
           ),
-          ListTile(
-            leading: Icon(Icons.settings, color: drawerTextColor),
-            title: Text('Settings', style: TextStyle(color: drawerTextColor)),
-            onTap: () {
-              Navigator.pop(context);
-              // Handle settings navigation
-            },
-          ),
-          Divider(color: drawerTextColor.withOpacity(0.5)),
+          // Removed Settings ListTile
+          // ListTile(
+          //   leading: Icon(Icons.settings, color: drawerTextColor),
+          //   title: Text('Settings', style: TextStyle(color: drawerTextColor)),
+          //   onTap: () {
+          //     Navigator.pop(context);
+          //     // Handle settings navigation
+          //   },
+          // ),
+          Divider(color: drawerTextColor.withOpacity(0.5)), // Kept the divider to separate main items from logout
           ListTile(
             leading: Icon(Icons.logout, color: drawerTextColor),
             title: Text('Logout', style: TextStyle(color: drawerTextColor)),
@@ -79,16 +81,17 @@ class AppDrawer extends StatelessWidget {
               Navigator.of(context).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
             },
           ),
-          ListTile(
-            leading: Icon(
-              themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
-              color: drawerTextColor,
-            ),
-            title: Text('Toggle Theme', style: TextStyle(color: drawerTextColor)),
-            onTap: () {
-              themeProvider.toggleTheme(themeProvider.themeMode != ThemeMode.dark);
-            },
-          ),
+          // Removed Toggle Theme ListTile
+          // ListTile(
+          //   leading: Icon(
+          //     themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+          //     color: drawerTextColor,
+          //   ),
+          //   title: Text('Toggle Theme', style: TextStyle(color: drawerTextColor)),
+          //   onTap: () {
+          //     themeProvider.toggleTheme(themeProvider.themeMode != ThemeMode.dark);
+          //   },
+          // ),
         ],
       ),
     );

@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
           storedEmail,
           storedPassword,
         );
-        if (mounted) Navigator.pushReplacementNamed(context, '/dashboard'); // Navigate to dashboard
+        if (mounted) Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
       } on FirebaseAuthException catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Save remember me preference
         await _saveRememberMe(_rememberMe);
 
-        if (mounted) Navigator.pushReplacementNamed(context, '/dashboard'); // Navigate to Dashboard
+        if (mounted) Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
       } on FirebaseAuthException catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -243,10 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(content: Text('Logged in as ${userCredential.user!.displayName ?? userCredential.user!.email}')),
           );
           // Navigate to home page or dashboard
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()), // Atau Navigator.pushReplacementNamed(context, '/dashboard');
-          );
+          Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
         }
       } else {
         // User cancelled or no credential returned
