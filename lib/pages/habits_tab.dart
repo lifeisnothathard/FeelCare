@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart'; // Ensure this import is correct and used
 import 'package:feelcare/services/habit_mood_service.dart';
 import 'package:feelcare/models/habit.dart';
 
@@ -201,22 +201,22 @@ class _HabitsTabState extends State<HabitsTab> {
                 itemCount: habits.length,
                 itemBuilder: (context, index) {
                   final habit = habits[index];
-                  // Determine icon color based on completion status for visual consistency
                   Color doneIconColor = habit.isCompletedToday
                       ? Colors.green.shade800
                       : Colors.green.shade400;
 
                   return Card(
-                    color: Theme.of(context).cardColor,
+                    // Explicitly use your custom adaptive color getter here
+                    color: AppColors.getAdaptiveCardBackground(
+                        context), // CHANGED THIS LINE
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    elevation: 2,
+                    elevation: 4,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
-                          // Display appropriate icon based on completion
                           Icon(
                             habit.isCompletedToday
                                 ? Icons.check_circle
@@ -232,7 +232,8 @@ class _HabitsTabState extends State<HabitsTab> {
                                 Text(
                                   habit.name,
                                   style: textTheme.titleLarge?.copyWith(
-                                    color: colorScheme.onSurface,
+                                    color: AppColors.getAdaptiveTextColor(
+                                        context), // Ensure text also adapts
                                     fontWeight: FontWeight.bold,
                                     decoration: habit.isCompletedToday
                                         ? TextDecoration.lineThrough
@@ -244,8 +245,9 @@ class _HabitsTabState extends State<HabitsTab> {
                                 Text(
                                   'Goal: ${habit.goal} | Frequency: ${habit.frequency}',
                                   style: textTheme.bodyMedium?.copyWith(
-                                    color:
-                                        colorScheme.onSurface.withOpacity(0.7),
+                                    color: AppColors.getAdaptiveTextColor(
+                                            context)
+                                        .withOpacity(0.7), // Adapt text color
                                   ),
                                 ),
                                 if (habit.specificDays != null &&
@@ -253,16 +255,18 @@ class _HabitsTabState extends State<HabitsTab> {
                                   Text(
                                     'Days: ${habit.specificDays!.join(', ')}',
                                     style: textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurface
-                                          .withOpacity(0.6),
+                                      color: AppColors.getAdaptiveTextColor(
+                                              context)
+                                          .withOpacity(0.6), // Adapt text color
                                     ),
                                   ),
                                 if (habit.lastCompleted != null)
                                   Text(
                                     'Last Completed: ${habit.lastCompleted!.toLocal().toString().split(' ')[0]}',
                                     style: textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurface
-                                          .withOpacity(0.5),
+                                      color: AppColors.getAdaptiveTextColor(
+                                              context)
+                                          .withOpacity(0.5), // Adapt text color
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
@@ -270,19 +274,19 @@ class _HabitsTabState extends State<HabitsTab> {
                                   Text(
                                     'Inactive',
                                     style: textTheme.bodySmall?.copyWith(
-                                      color: Colors.red.shade400,
+                                      color: Colors.red
+                                          .shade400, // This is a fixed color, not theme-adaptive from AppColors
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                               ],
                             ),
                           ),
-                          // Conditional display for Mark Done / Undo button
                           if (habit.isCompletedToday)
                             IconButton(
                               icon: Icon(Icons.undo,
-                                  color: colorScheme
-                                      .secondary), // Distinct icon for undo
+                                  color: AppColors
+                                      .secondaryDark), // Using a direct color from AppColors
                               onPressed: () async {
                                 print(
                                     'Attempting to unmark habit "${habit.name}" as done');
@@ -330,9 +334,10 @@ class _HabitsTabState extends State<HabitsTab> {
                               },
                               tooltip: 'Mark as Done',
                             ),
-                          // Edit Button
                           IconButton(
-                            icon: Icon(Icons.edit, color: colorScheme.primary),
+                            icon: Icon(Icons.edit,
+                                color: AppColors
+                                    .primaryDark), // Using a direct color from AppColors
                             onPressed: () async {
                               print('Edit habit: ${habit.name}');
                               final updatedHabit =
@@ -361,10 +366,10 @@ class _HabitsTabState extends State<HabitsTab> {
                             },
                             tooltip: 'Edit Habit',
                           ),
-                          // Delete Button
                           IconButton(
-                            icon:
-                                Icon(Icons.delete, color: Colors.red.shade400),
+                            icon: Icon(Icons.delete,
+                                color: AppColors
+                                    .errorRed), // Using a direct color from AppColors
                             onPressed: () async {
                               print('Delete habit: ${habit.name}');
                               try {
@@ -388,7 +393,8 @@ class _HabitsTabState extends State<HabitsTab> {
                                                       .pop(true),
                                               child: const Text('Delete'),
                                               style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red),
+                                                  foregroundColor: AppColors
+                                                      .errorRed), // Using a direct color from AppColors
                                             ),
                                           ],
                                         );
