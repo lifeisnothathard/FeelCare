@@ -7,7 +7,8 @@ import 'package:flutter/foundation.dart'; // Import for ChangeNotifier
 import '../models/habit.dart';
 import '../models/mood_entry.dart';
 
-class HabitMoodService extends ChangeNotifier { // Extend ChangeNotifier
+class HabitMoodService extends ChangeNotifier {
+  // Extend ChangeNotifier
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -67,12 +68,10 @@ class HabitMoodService extends ChangeNotifier { // Extend ChangeNotifier
         .collection('users')
         .doc(currentUserId)
         .collection('habits')
-        .orderBy('createdAt', descending: true) // Assuming you have a 'createdAt' field for sorting
+        .orderBy('creationDate', descending: true) // <--- CHANGE THIS LINE
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Habit.fromFirestore(doc))
-          .toList();
+      return snapshot.docs.map((doc) => Habit.fromFirestore(doc)).toList();
     });
   }
 
@@ -134,9 +133,7 @@ class HabitMoodService extends ChangeNotifier { // Extend ChangeNotifier
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => MoodEntry.fromFirestore(doc))
-          .toList();
+      return snapshot.docs.map((doc) => MoodEntry.fromFirestore(doc)).toList();
     });
   }
 
@@ -151,9 +148,7 @@ class HabitMoodService extends ChangeNotifier { // Extend ChangeNotifier
         .orderBy('date', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => MoodEntry.fromFirestore(doc))
-          .toList();
+      return snapshot.docs.map((doc) => MoodEntry.fromFirestore(doc)).toList();
     });
   }
 }
