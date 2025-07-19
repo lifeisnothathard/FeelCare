@@ -8,7 +8,6 @@ import '../models/habit.dart';
 import '../models/mood_entry.dart';
 
 class HabitMoodService extends ChangeNotifier {
-  // Extend ChangeNotifier
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -44,6 +43,50 @@ class HabitMoodService extends ChangeNotifier {
     notifyListeners(); // Notify listeners after updating a habit
   }
 
+  // NEW METHOD: Mark a habit as done for today
+  Future<void> markHabitAsDone(String habitId) async {
+    if (currentUserId == null) {
+      throw Exception("User not logged in.");
+    }
+
+    // Get a reference to the habit document
+    final habitRef = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('habits')
+        .doc(habitId);
+
+    // Fetch the habit to get its current data
+    final docSnapshot = await habitRef.get();
+
+    if (!docSnapshot.exists) {
+      throw Exception("Habit not found.");
+    }
+
+    // Convert existing data to a Habit object
+    final existingHabit = Habit.fromFirestore(docSnapshot);
+
+    // Update the relevant fields
+    final updatedHabit = existingHabit.copyWith(
+      isCompletedToday: true,
+      lastCompleted: DateTime.now(),
+    );
+
+    // Update the habit in Firestore
+    await habitRef.update({
+      'isCompletedToday': updatedHabit.isCompletedToday,
+      'lastCompleted': updatedHabit.lastCompleted != null
+          ? Timestamp.fromDate(updatedHabit.lastCompleted!)
+          : null,
+      // You might also want to add a 'completedDates' array to track all completions
+      // For now, we're just updating the 'today' status and 'lastCompleted'
+    });
+
+    // The stream will automatically notify listeners, but for general ChangeNotifier
+    // consumers, this is still a good idea.
+    notifyListeners();
+  }
+
   Future<void> deleteHabit(String habitId) async {
     if (currentUserId == null) {
       throw Exception("User not logged in.");
@@ -68,7 +111,8 @@ class HabitMoodService extends ChangeNotifier {
         .collection('users')
         .doc(currentUserId)
         .collection('habits')
-        .orderBy('creationDate', descending: true) // <--- CHANGE THIS LINE
+        .orderBy('creationDate',
+            descending: true) // Assuming 'creationDate' is the correct field
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => Habit.fromFirestore(doc)).toList();
