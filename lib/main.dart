@@ -88,9 +88,7 @@ class MyApp extends StatelessWidget {
           secondary: AppColors.secondaryGreen,
           // Add other colors as needed for your light theme
           surface: Colors.white, // Example surface color
-          onSurface: Colors.black87, // Example text color on surface
-          background: Colors.white, // Example background color
-          onBackground: Colors.black87, // Example text color on background
+          onSurface: Colors.black87, // Example text color on background
         ),
         // You can also define text themes, button themes, etc. here
         // textTheme: lightTextTheme, // If you have a custom lightTextTheme
@@ -102,9 +100,7 @@ class MyApp extends StatelessWidget {
           secondary: AppColors.darkSecondaryGreen,
           // Add other colors as needed for your dark theme
           surface: Color(0xFF121212), // Example dark surface color
-          onSurface: Colors.white70, // Example text color on dark surface
-          background: Color(0xFF121212), // Example dark background color
-          onBackground: Colors.white70, // Example text color on dark background
+          onSurface: Colors.white70, // Example text color on dark background
         ),
         // textTheme: darkTextTheme, // If you have a custom darkTextTheme
       ),
