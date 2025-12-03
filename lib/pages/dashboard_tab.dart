@@ -1,13 +1,13 @@
 // lib/widgets/dashboard_tab.dart
 import 'package:feelcare/services/streak.dart';
 import 'package:flutter/material.dart';
-import 'package:feelcare/themes/colors.dart'; // Correct import
+import 'package:feelcare/themes/colors.dart';
 import 'package:feelcare/widgets/large_card.dart';
 import 'package:feelcare/widgets/progress.dart';
-import 'package:provider/provider.dart'; // Import Provider for HabitMoodService
-import 'package:feelcare/services/habit_mood_service.dart'; // Import your service
-import 'package:feelcare/models/mood_entry.dart'; // Import your MoodEntry model
-
+import 'package:provider/provider.dart';
+import 'package:feelcare/services/habit_mood_service.dart';
+import 'package:feelcare/models/mood_entry.dart';
+import 'package:feelcare/models/habit.dart'; // Import your Habit model
 
 // Represents the content for the 'Dashboard' tab.
 class DashboardTab extends StatefulWidget {
@@ -20,14 +20,15 @@ class DashboardTab extends StatefulWidget {
 class _DashboardTabState extends State<DashboardTab> {
   int _currentStreak = 0;
   int _longestStreak = 0;
-  int _positiveDays = 0; // New state variable for positive days
-  int _entriesThisMonth = 0; // New state variable for entries this month
-  bool _isLoadingDashboard = true; // Renamed to reflect loading all dashboard data
+  int _positiveDays = 0;
+  int _entriesThisMonth = 0;
+  int _habitsCompletedToday =
+      0; // NEW: State variable for habits completed today
+  bool _isLoadingDashboard = true;
 
   @override
   void initState() {
     super.initState();
-    // Ensure context is available before calling Provider.of
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDashboardData();
     });
@@ -35,18 +36,21 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Future<void> _loadDashboardData() async {
     setState(() {
-      _isLoadingDashboard = true; // Show loading indicator for all data
+      _isLoadingDashboard = true;
     });
 
     try {
-      // Fetch streak data
+      final habitMoodService =
+          Provider.of<HabitMoodService>(context, listen: false);
+
+      // --- 1. Fetch Streak Data ---
       final Map<String, int> streakData = await StreakService.updateStreak();
       _currentStreak = streakData['currentStreak'] ?? 0;
       _longestStreak = streakData['longestStreak'] ?? 0;
 
-      // Access HabitMoodService to fetch mood entries
-      final habitMoodService = Provider.of<HabitMoodService>(context, listen: false);
-      List<MoodEntry> moodEntries = await habitMoodService.getAllMoodEntriesForUser().first;
+      // --- 2. Fetch Mood Entries and calculate related metrics ---
+      List<MoodEntry> moodEntries =
+          await habitMoodService.getAllMoodEntriesForUser().first;
 
       int positiveCount = 0;
       int entriesCountThisMonth = 0;
@@ -55,56 +59,66 @@ class _DashboardTabState extends State<DashboardTab> {
       final currentYear = now.year;
 
       for (var entry in moodEntries) {
-        // Assuming a moodRating of 3 or higher (out of 5) is considered positive
         if (entry.moodRating != null && entry.moodRating! >= 3) {
           positiveCount++;
         }
 
-        // Check if the entry date is within the current month and year
-        if (entry.date.month == currentMonth && entry.date.year == currentYear) {
+        if (entry.date.month == currentMonth &&
+            entry.date.year == currentYear) {
           entriesCountThisMonth++;
         }
       }
 
+      // --- 3. Fetch Habits and calculate habits completed today ---
+      List<Habit> habits = await habitMoodService.getHabitsForUser().first;
+      int completedHabitsCount = 0;
+      final today =
+          DateTime(now.year, now.month, now.day); // Get start of today
+
+      for (var habit in habits) {
+        // Check if the habit is marked as completed AND if its lastCompleted date is indeed today
+        if (habit.isCompletedToday &&
+            habit.lastCompleted != null &&
+            habit.lastCompleted!.year == today.year &&
+            habit.lastCompleted!.month == today.month &&
+            habit.lastCompleted!.day == today.day) {
+          completedHabitsCount++;
+        }
+      }
+
+      // --- Update State with all calculated data ---
       setState(() {
         _positiveDays = positiveCount;
         _entriesThisMonth = entriesCountThisMonth;
-        _isLoadingDashboard = false; // Hide loading indicator after all data is loaded
+        _habitsCompletedToday =
+            completedHabitsCount; // Update the new state variable
+        _isLoadingDashboard = false;
       });
     } catch (e) {
       print('Error loading dashboard data: $e');
       setState(() {
-        _isLoadingDashboard = false; // Hide loading indicator even on error
+        _isLoadingDashboard = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // habitMoodService is now accessed within _loadDashboardData,
-    // so this line is no longer strictly necessary here unless other UI elements
-    // within build() directly consume it. For now, it's commented out.
-    // final habitMoodService = Provider.of<HabitMoodService>(context);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // Title for the "Overall Progress" section
           Text(
             'Overall Progress',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppColors.getAdaptiveTextColor(
-                  context), // Text color adapts to theme
+              color: AppColors.getAdaptiveTextColor(context),
             ),
           ),
-          const SizedBox(height: 16), // Spacing below title
-
-          // Grid for "Overall Progress" cards (2x2 layout)
-          _isLoadingDashboard // Use the new loading variable
+          const SizedBox(height: 16),
+          _isLoadingDashboard
               ? Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -118,48 +132,44 @@ class _DashboardTabState extends State<DashboardTab> {
                   crossAxisSpacing: 16.0,
                   mainAxisSpacing: 16.0,
                   children: <Widget>[
-                    const ProgressCard(
+                    ProgressCard(
+                      // NOW DYNAMIC
                       icon: Icons.check_circle_outline,
                       iconColor: Colors.green,
                       title: 'Habits Completed',
-                      value: '0', // This will be dynamic later
+                      value:
+                          '$_habitsCompletedToday', // Display the dynamic count
                     ),
                     ProgressCard(
                       icon: Icons.mood,
                       iconColor: Colors.blueAccent,
                       title: 'Positive Days',
-                      value: '$_positiveDays', // Dynamic positive days
+                      value: '$_positiveDays',
                     ),
                     ProgressCard(
                       icon: Icons.trending_up,
                       iconColor: Colors.orange,
                       title: 'Current Streak',
-                      value: '$_currentStreak days', // Dynamic current streak
+                      value: '$_currentStreak days',
                     ),
                     ProgressCard(
                       icon: Icons.calendar_today,
                       iconColor: Colors.purple,
                       title: 'Entries This Month',
-                      value: '$_entriesThisMonth', // Dynamic entries this month
+                      value: '$_entriesThisMonth',
                     ),
                   ],
                 ),
           const SizedBox(height: 32),
-
-          // Large Card Placeholder for Longest Streak
-          _isLoadingDashboard // Use the new loading variable
-              ? const SizedBox.shrink() // Hide if loading
+          _isLoadingDashboard
+              ? const SizedBox.shrink()
               : LargeProgressCard(
                   icon: Icons.star,
                   iconColor: Colors.yellow.shade700,
                   title: 'Longest Streak',
-                  value: '$_longestStreak days', // Dynamic longest streak
+                  value: '$_longestStreak days',
                 ),
-          const SizedBox(height: 32), // Add spacing before new section
-
-          // If you still need space at the bottom for other elements or general padding,
-          // you can add a SizedBox here, otherwise, it's removed with the journal entries.
-          // const SizedBox(height: 32), // Example: Add general bottom spacing if needed
+          const SizedBox(height: 32),
         ],
       ),
     );

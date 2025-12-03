@@ -2,20 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/themes/colors.dart'; // Ensure this import is correct and used
 import 'package:feelcare/services/habit_mood_service.dart';
-import 'package:feelcare/models/habit.dart'; // Make sure your Habit model is imported
-
-// The Habit model class can be removed from here if it's already in lib/models/habit.dart
-// class Habit {
-//   final String id;
-//   final String name;
-//   final String goal;
-//   final String frequency;
-//
-//   Habit({required this.id, required this.name, required this.goal, required this.frequency});
-// }
-
+import 'package:feelcare/models/habit.dart';
 
 class HabitsTab extends StatefulWidget {
   const HabitsTab({super.key});
@@ -25,10 +14,129 @@ class HabitsTab extends StatefulWidget {
 }
 
 class _HabitsTabState extends State<HabitsTab> {
+  late TextEditingController _nameController;
+  late TextEditingController _goalController;
+  late TextEditingController _frequencyController;
+  late TextEditingController _specificDaysController;
+  bool _isActive = true;
+
   @override
   void initState() {
     super.initState();
-    // No need to call _loadHabits() explicitly if listening to a stream
+    _nameController = TextEditingController();
+    _goalController = TextEditingController();
+    _frequencyController = TextEditingController();
+    _specificDaysController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _goalController.dispose();
+    _frequencyController.dispose();
+    _specificDaysController.dispose();
+    super.dispose();
+  }
+
+  Future<Habit?> _showEditHabitDialog(
+      BuildContext context, Habit habitToEdit) async {
+    _nameController.text = habitToEdit.name;
+    _goalController.text = habitToEdit.goal;
+    _frequencyController.text = habitToEdit.frequency;
+    _specificDaysController.text = habitToEdit.specificDays?.join(', ') ?? '';
+    _isActive = habitToEdit.isActive;
+
+    return showDialog<Habit>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Habit'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    TextField(
+                      controller: _nameController,
+                      decoration:
+                          const InputDecoration(labelText: 'Habit Name'),
+                    ),
+                    TextField(
+                      controller: _goalController,
+                      decoration: const InputDecoration(
+                          labelText: 'Goal (e.g., 1 time a day)'),
+                    ),
+                    TextField(
+                      controller: _frequencyController,
+                      decoration: const InputDecoration(
+                          labelText:
+                              'Frequency (e.g., daily, weekly, specific_days)'),
+                    ),
+                    TextField(
+                      controller: _specificDaysController,
+                      decoration: const InputDecoration(
+                          labelText:
+                              'Specific Days (comma-separated, e.g., Monday, Wednesday)'),
+                    ),
+                    Row(
+                      children: [
+                        const Text('Is Active?'),
+                        Switch(
+                          value: _isActive,
+                          onChanged: (bool value) {
+                            setDialogState(() {
+                              _isActive = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_nameController.text.isEmpty ||
+                        _goalController.text.isEmpty ||
+                        _frequencyController.text.isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Please fill in all required fields.')),
+                      );
+                      return;
+                    }
+
+                    final updatedHabit = habitToEdit.copyWith(
+                      name: _nameController.text,
+                      goal: _goalController.text,
+                      frequency: _frequencyController.text,
+                      specificDays: _specificDaysController.text.isNotEmpty
+                          ? _specificDaysController.text
+                              .split(',')
+                              .map((s) => s.trim())
+                              .toList()
+                          : null,
+                      isActive: _isActive,
+                    );
+                    Navigator.of(dialogContext).pop(updatedHabit);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -36,18 +144,10 @@ class _HabitsTabState extends State<HabitsTab> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Use Consumer to listen to changes in HabitMoodService
-    // This ensures that if HabitMoodService uses notifyListeners()
-    // for other state changes (not just stream updates), this widget can react.
     return Consumer<HabitMoodService>(
       builder: (context, habitMoodService, child) {
-        // Use a StreamBuilder to react to changes in the habits stream
-        // The `!` operator asserts that habitMoodService.getHabitsForUser() is not null.
-        // This is safe because your HabitMoodService's getHabitsForUser()
-        // explicitly returns Stream.value([]) if currentUserId is null,
-        // so it never truly returns a null Stream.
         return StreamBuilder<List<Habit>>(
-          stream: habitMoodService.getHabitsForUser(), // This should be fine now.
+          stream: habitMoodService.getHabitsForUser(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
@@ -61,11 +161,10 @@ class _HabitsTabState extends State<HabitsTab> {
                 child: Text(
                   'Error loading habits: ${snapshot.error}',
                   style: TextStyle(color: colorScheme.error),
-                  textAlign: TextAlign.center, // Center text for readability
+                  textAlign: TextAlign.center,
                 ),
               );
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              // Display empty state
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -81,36 +180,50 @@ class _HabitsTabState extends State<HabitsTab> {
                       Text(
                         'Your Habits List Will Appear Here!',
                         textAlign: TextAlign.center,
-                        style: textTheme.headlineSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.8)),
+                        style: textTheme.headlineSmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.8)),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         'Start adding new habits using the "+" button.',
                         textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.6)),
+                        style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.6)),
                       ),
                     ],
                   ),
                 ),
               );
             } else {
-              // Display the list of habits
               final habits = snapshot.data!;
               return ListView.builder(
                 padding: const EdgeInsets.all(16.0),
                 itemCount: habits.length,
                 itemBuilder: (context, index) {
                   final habit = habits[index];
+                  Color doneIconColor = habit.isCompletedToday
+                      ? Colors.green.shade800
+                      : Colors.green.shade400;
+
                   return Card(
-                    color: Theme.of(context).cardColor,
+                    // Explicitly use your custom adaptive color getter here
+                    color: AppColors.getAdaptiveCardBackground(
+                        context), // CHANGED THIS LINE
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle_outline, color: colorScheme.secondary, size: 30),
+                          Icon(
+                            habit.isCompletedToday
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            color: doneIconColor,
+                            size: 30,
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
@@ -119,50 +232,147 @@ class _HabitsTabState extends State<HabitsTab> {
                                 Text(
                                   habit.name,
                                   style: textTheme.titleLarge?.copyWith(
-                                    color: colorScheme.onSurface,
+                                    color: AppColors.getAdaptiveTextColor(
+                                        context), // Ensure text also adapts
                                     fontWeight: FontWeight.bold,
+                                    decoration: habit.isCompletedToday
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    decorationColor: doneIconColor,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Goal: ${habit.goal} | Frequency: ${habit.frequency}',
                                   style: textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onSurface.withOpacity(0.7),
+                                    color: AppColors.getAdaptiveTextColor(
+                                            context)
+                                        .withOpacity(0.7), // Adapt text color
                                   ),
                                 ),
+                                if (habit.specificDays != null &&
+                                    habit.specificDays!.isNotEmpty)
+                                  Text(
+                                    'Days: ${habit.specificDays!.join(', ')}',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: AppColors.getAdaptiveTextColor(
+                                              context)
+                                          .withOpacity(0.6), // Adapt text color
+                                    ),
+                                  ),
+                                if (habit.lastCompleted != null)
+                                  Text(
+                                    'Last Completed: ${habit.lastCompleted!.toLocal().toString().split(' ')[0]}',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: AppColors.getAdaptiveTextColor(
+                                              context)
+                                          .withOpacity(0.5), // Adapt text color
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                if (!habit.isActive)
+                                  Text(
+                                    'Inactive',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: Colors.red
+                                          .shade400, // This is a fixed color, not theme-adaptive from AppColors
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
-                          // Example action buttons (e.g., mark complete, edit, delete)
+                          if (habit.isCompletedToday)
+                            IconButton(
+                              icon: Icon(Icons.undo,
+                                  color: AppColors
+                                      .secondaryDark), // Using a direct color from AppColors
+                              onPressed: () async {
+                                print(
+                                    'Attempting to unmark habit "${habit.name}" as done');
+                                try {
+                                  await habitMoodService
+                                      .unmarkHabitAsDone(habit.id!);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Habit "${habit.name}" unmarked!')),
+                                  );
+                                } catch (e) {
+                                  print('Error unmarking habit: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Failed to unmark habit: $e')),
+                                  );
+                                }
+                              },
+                              tooltip: 'Undo Mark as Done',
+                            )
+                          else
+                            IconButton(
+                              icon: Icon(Icons.done_all, color: doneIconColor),
+                              onPressed: () async {
+                                print(
+                                    'Attempting to mark habit "${habit.name}" as done');
+                                try {
+                                  await habitMoodService
+                                      .markHabitAsDone(habit.id!);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Habit "${habit.name}" marked as done!')),
+                                  );
+                                } catch (e) {
+                                  print('Error marking habit as done: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Failed to mark habit as done: $e')),
+                                  );
+                                }
+                              },
+                              tooltip: 'Mark as Done',
+                            ),
                           IconButton(
-                            icon: Icon(Icons.done, color: Colors.green.shade600),
-                            onPressed: () {
-                              print('Mark habit "${habit.name}" as done');
-                              // You'd typically call a method in habitMoodService to mark as done
-                              // e.g., habitMoodService.markHabitAsDone(habit.id, DateTime.now());
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Habit marked as done (functionality to be implemented)!')),
-                              );
-                            },
-                            tooltip: 'Mark as Done',
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.edit, color: colorScheme.primary),
-                            onPressed: () {
+                            icon: Icon(Icons.edit,
+                                color: AppColors
+                                    .primaryDark), // Using a direct color from AppColors
+                            onPressed: () async {
                               print('Edit habit: ${habit.name}');
-                              // Open a dialog to edit habit
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Edit habit (functionality to be implemented)!')),
-                              );
+                              final updatedHabit =
+                                  await _showEditHabitDialog(context, habit);
+
+                              if (updatedHabit != null) {
+                                try {
+                                  await habitMoodService
+                                      .updateHabit(updatedHabit);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Habit "${updatedHabit.name}" updated successfully!')),
+                                  );
+                                } catch (e) {
+                                  print('Error updating habit: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Failed to update habit: $e')),
+                                  );
+                                }
+                              } else {
+                                print('Edit cancelled or no changes.');
+                              }
                             },
                             tooltip: 'Edit Habit',
                           ),
                           IconButton(
-                            icon: Icon(Icons.delete, color: Colors.red.shade400),
+                            icon: Icon(Icons.delete,
+                                color: AppColors
+                                    .errorRed), // Using a direct color from AppColors
                             onPressed: () async {
                               print('Delete habit: ${habit.name}');
                               try {
-                                // Add confirmation dialog before deleting for better UX
                                 final bool confirmDelete = await showDialog(
                                   context: context,
                                   builder: (BuildContext dialogContext) {
@@ -176,8 +386,8 @@ class _HabitsTabState extends State<HabitsTab> {
                                         ),
                                         TextButton(
                                           onPressed: () => Navigator.of(dialogContext).pop(true),
-                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
                                           child: const Text('Delete'),
+                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
                                         ),
                                       ],
                                     );
@@ -185,15 +395,19 @@ class _HabitsTabState extends State<HabitsTab> {
                                 ) ?? false; // Default to false if dialog is dismissed
 
                                 if (confirmDelete) {
-                                  await habitMoodService.deleteHabit(habit.id!); // habit.id is nullable, use ! if you're certain
+                                  await habitMoodService.deleteHabit(habit.id!);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Habit "${habit.name}" deleted.')),
+                                    SnackBar(
+                                        content: Text(
+                                            'Habit "${habit.name}" deleted.')),
                                   );
                                 }
                               } catch (e) {
                                 print('Error deleting habit: $e');
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to delete habit: $e')),
+                                  SnackBar(
+                                      content:
+                                          Text('Failed to delete habit: $e')),
                                 );
                               }
                             },

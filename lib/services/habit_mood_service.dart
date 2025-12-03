@@ -2,19 +2,17 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'; // Import for ChangeNotifier
+import 'package:flutter/foundation.dart';
 
 import '../models/habit.dart';
 import '../models/mood_entry.dart';
 
 class HabitMoodService extends ChangeNotifier {
-  // Extend ChangeNotifier
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   User? get currentUser => _auth.currentUser;
 
-  // Helper to get the current user's UID
   String? get currentUserId => currentUser?.uid;
 
   // --- Habit Operations ---
@@ -28,7 +26,7 @@ class HabitMoodService extends ChangeNotifier {
         .doc(currentUserId)
         .collection('habits')
         .add(habit.toFirestore());
-    notifyListeners(); // Notify listeners after adding a habit
+    notifyListeners();
   }
 
   Future<void> updateHabit(Habit habit) async {
@@ -41,7 +39,48 @@ class HabitMoodService extends ChangeNotifier {
         .collection('habits')
         .doc(habit.id)
         .update(habit.toFirestore());
-    notifyListeners(); // Notify listeners after updating a habit
+    notifyListeners();
+  }
+
+  Future<void> markHabitAsDone(String habitId) async {
+    if (currentUserId == null) {
+      throw Exception("User not logged in.");
+    }
+
+    final habitRef = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('habits')
+        .doc(habitId);
+
+    // No need to fetch the whole document if we are just updating these fields
+    await habitRef.update({
+      'isCompletedToday': true,
+      'lastCompleted': Timestamp.fromDate(DateTime.now()),
+    });
+
+    notifyListeners(); // Notify consumers that data might have changed
+  }
+
+  // NEW METHOD: Unmark a habit as done for today
+  Future<void> unmarkHabitAsDone(String habitId) async {
+    if (currentUserId == null) {
+      throw Exception("User not logged in.");
+    }
+
+    final habitRef = _firestore
+        .collection('users')
+        .doc(currentUserId)
+        .collection('habits')
+        .doc(habitId);
+
+    // Update the relevant fields to revert completion
+    await habitRef.update({
+      'isCompletedToday': false,
+      'lastCompleted': null, // Clear the last completion date when unmarking
+    });
+
+    notifyListeners(); // Notify consumers that data might have changed
   }
 
   Future<void> deleteHabit(String habitId) async {
@@ -54,21 +93,18 @@ class HabitMoodService extends ChangeNotifier {
         .collection('habits')
         .doc(habitId)
         .delete();
-    notifyListeners(); // Notify listeners after deleting a habit
+    notifyListeners();
   }
 
-  // getHabitsForUser() remains a Stream, so it will automatically push updates
-  // when the Firestore collection changes. No explicit notifyListeners() needed here
-  // because the Stream already handles reactivity.
   Stream<List<Habit>> getHabitsForUser() {
     if (currentUserId == null) {
-      return Stream.value([]); // Return an empty stream if no user
+      return Stream.value([]);
     }
     return _firestore
         .collection('users')
         .doc(currentUserId)
         .collection('habits')
-        .orderBy('creationDate', descending: true) // <--- CHANGE THIS LINE
+        .orderBy('creationDate', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => Habit.fromFirestore(doc)).toList();
@@ -76,6 +112,7 @@ class HabitMoodService extends ChangeNotifier {
   }
 
   // --- Mood Entry Operations ---
+  // ... (rest of your Mood Entry methods remain unchanged) ...
 
   Future<void> addMoodEntry(MoodEntry entry) async {
     if (currentUserId == null) {
@@ -86,7 +123,7 @@ class HabitMoodService extends ChangeNotifier {
         .doc(currentUserId)
         .collection('mood_entries')
         .add(entry.toFirestore());
-    notifyListeners(); // Notify listeners after adding a mood entry
+    notifyListeners();
   }
 
   Future<void> updateMoodEntry(MoodEntry entry) async {
@@ -99,7 +136,7 @@ class HabitMoodService extends ChangeNotifier {
         .collection('mood_entries')
         .doc(entry.id)
         .update(entry.toFirestore());
-    notifyListeners(); // Notify listeners after updating a mood entry
+    notifyListeners();
   }
 
   Future<void> deleteMoodEntry(String entryId) async {
@@ -112,11 +149,9 @@ class HabitMoodService extends ChangeNotifier {
         .collection('mood_entries')
         .doc(entryId)
         .delete();
-    notifyListeners(); // Notify listeners after deleting a mood entry
+    notifyListeners();
   }
 
-  // getMoodEntriesForDay() and getAllMoodEntriesForUser() remain Streams,
-  // so they will automatically push updates.
   Stream<List<MoodEntry>> getMoodEntriesForDay(DateTime date) {
     if (currentUserId == null) {
       return Stream.value([]);
