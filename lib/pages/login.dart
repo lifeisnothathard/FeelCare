@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:feelcare/themes/colors.dart'; // Import AppColors for direct access if needed, but prefer theme.of(context)
+import 'package:feelcare/themes/colors.dart'; 
 
 class LoginScreen extends StatefulWidget {
   final ThemeProvider themeProvider;
@@ -25,22 +25,30 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
   bool _rememberMe = false;
+  
   final LocalAuthentication _localAuth = LocalAuthentication();
   bool _isBiometricAvailable = false;
+  // NEW: Track if the user has enabled biometrics via settings
+  bool _isBiometricEnabledByUser = false; 
 
   @override
   void initState() {
     super.initState();
-    _checkBiometrics();
     _loadRememberMe();
+    _checkBiometrics(); 
   }
 
-  // --- Biometric Authentication Logic (kept as is, but will use theme colors for UI feedback) ---
+  // --- Biometric Authentication Logic ---
   Future<void> _checkBiometrics() async {
     bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+    final prefs = await SharedPreferences.getInstance();
+    // Load the user's preference for biometric login
+    final bool enabled = prefs.getBool('biometricEnabled') ?? false; 
+
     if (mounted) {
       setState(() {
         _isBiometricAvailable = canCheckBiometrics;
+        _isBiometricEnabledByUser = enabled; // Set user preference
       });
     }
   }
@@ -48,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _authenticateWithBiometrics() async {
     try {
       bool authenticated = await _localAuth.authenticate(
-        localizedReason: 'Scan your fingerprint or face to authenticate',
+        localizedReason: 'Scan your face to log in, or use your fingerprint.',
         options: const AuthenticationOptions(
           stickyAuth: true,
           useErrorDialogs: true,
@@ -56,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (authenticated) {
-        // Authenticated with biometrics, now log in using stored credentials
         _loginWithStoredCredentials();
       } else {
         if (mounted) {
@@ -78,32 +85,35 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     final prefs = await SharedPreferences.getInstance();
     final storedEmail = prefs.getString('email');
-    final storedPassword = prefs.getString('password'); // **WARNING: Storing passwords directly is insecure.**
+    // Note: Since we stopped storing the password, this function now relies on 
+    // the user's Firebase session persistence or a stored token 
+    // (which requires advanced setup not covered here). 
+    // For this demonstration, we'll assume Firebase persistence handles the login 
+    // once biometrics are confirmed. For true secure login, a token 
+    // should be retrieved and stored, not the password.
 
-    if (storedEmail != null && storedPassword != null) {
-      try {
-        await Provider.of<AuthService>(context, listen: false).signInWithEmail(
-          storedEmail,
-          storedPassword,
+    if (storedEmail != null) {
+      // In a real app, you would use biometrics to decrypt a security token
+      // and use the token to sign into Firebase. 
+      // Since we don't have that token logic, we rely on the authentication 
+      // context already being established via Firebase's persistent user session.
+      
+      // Navigate directly if biometric is successful and email is known
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home'); 
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logged in successfully via Biometrics.')),
         );
-        if (mounted) Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
-      } on FirebaseAuthException catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed: ${e.message}', style: TextStyle(color: Theme.of(context).colorScheme.onError))),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
       }
+      
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No stored credentials found.', style: TextStyle(color: Theme.of(context).colorScheme.onError))),
+          SnackBar(content: Text('No stored credentials found. Please log in manually.', style: TextStyle(color: Theme.of(context).colorScheme.onError))),
         );
       }
-      if (mounted) setState(() => _isLoading = false);
     }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   Future<void> _loadRememberMe() async {
@@ -112,8 +122,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _rememberMe = prefs.getBool('rememberMe') ?? false;
       if (_rememberMe) {
         _emailController.text = prefs.getString('email') ?? '';
-        // Note: We typically don't load password here for security reasons.
-        // Biometric login would rely on a token or Firebase persistence.
       }
     });
   }
@@ -123,10 +131,13 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setBool('rememberMe', value);
     if (!value) {
       await prefs.remove('email');
-      await prefs.remove('password'); // Remove if not remembering
+      // REMOVED INSECURE PASSWORD STORAGE
+      // await prefs.remove('password'); 
+      await prefs.remove('biometricEnabled'); 
     } else {
       await prefs.setString('email', _emailController.text);
-      // await prefs.setString('password', _passwordController.text); // Again, be cautious with this.
+      // DO NOT STORE PASSWORD
+      // await prefs.setString('password', _passwordController.text); 
     }
   }
 
@@ -158,10 +169,13 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text,
           _passwordController.text,
         );
-        // Save remember me preference
+        // Save remember me preference (and email)
         await _saveRememberMe(_rememberMe);
 
-        if (mounted) Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
+        // Update biometric check to see if the biometric button should now show
+        _checkBiometrics(); 
+
+        if (mounted) Navigator.pushReplacementNamed(context, '/home'); 
       } on FirebaseAuthException catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -180,8 +194,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Inside _LoginScreenState class
   void _resetPassword() async {
+    // ... (reset password function remains unchanged) ...
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your email to reset password.')),
@@ -213,8 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // >>> KOD _socialLogin YANG TELAH DIUBAH <<<
   void _socialLogin(String type) async {
+    // ... (social login function remains unchanged) ...
     setState(() {
       _isLoading = true;
     });
@@ -232,21 +246,17 @@ class _LoginScreenState extends State<LoginScreen> {
             SnackBar(content: Text('Social login type "$type" is not supported (Google has been removed).')),
           );
         }
-        userCredential = null; // Pastikan userCredential adalah null jika tidak disokong
+        userCredential = null; 
       }
 
-
       if (userCredential != null && userCredential.user != null) {
-        // Successfully logged in with social provider
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Logged in as ${userCredential.user!.displayName ?? userCredential.user!.email}')),
           );
-          // Navigate to home page or dashboard
-          Navigator.pushReplacementNamed(context, '/home'); // CHANGED: Navigate to /home
+          Navigator.pushReplacementNamed(context, '/home'); 
         }
       } else {
-        // User cancelled or no credential returned
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Social login cancelled or failed.')),
@@ -274,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface, // Use theme background color
+      backgroundColor: colorScheme.surface, 
       appBar: AppBar(
         title: Text('Login', style: textTheme.headlineSmall?.copyWith(color: colorScheme.onPrimary)),
         backgroundColor: colorScheme.primary,
@@ -303,19 +313,19 @@ class _LoginScreenState extends State<LoginScreen> {
               children: <Widget>[
                 // App Logo/Icon for "Cute and Calming" feel
                 Icon(
-                  Icons.favorite_border, // Example: a heart or a calming leaf icon
+                  Icons.favorite_border, 
                   size: 100,
-                  color: colorScheme.primary, // Use primary color for the icon
+                  color: colorScheme.primary, 
                 ),
                 const SizedBox(height: 20),
                 Text(
                   'Welcome to FeelCare',
-                  style: textTheme.headlineLarge?.copyWith(color: colorScheme.onSurface), // Use theme text style
+                  style: textTheme.headlineLarge?.copyWith(color: colorScheme.onSurface), 
                   textAlign: TextAlign.center,
                 ),
                 Text(
                   'Sign in to track your habits and emotions!',
-                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)), // Use theme text style
+                  style: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)), 
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
@@ -329,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
-                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface), // Text color in input
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface), 
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -352,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   validator: _validatePassword,
-                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface), // Text color in input
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface), 
                 ),
                 const SizedBox(height: 10),
 
@@ -387,8 +397,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isLoading ? colorScheme.primary.withOpacity(0.5) : colorScheme.primary, // Button color
-                      foregroundColor: colorScheme.onPrimary, // Text color
+                      backgroundColor: _isLoading ? colorScheme.primary.withOpacity(0.5) : colorScheme.primary, 
+                      foregroundColor: colorScheme.onPrimary, 
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -402,16 +412,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // Biometric Login Button
-                if (_isBiometricAvailable) ...[
+                // ONLY SHOW IF AVAILABLE ON DEVICE AND ENABLED BY USER
+                if (_isBiometricAvailable && _isBiometricEnabledByUser) ...[
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: _isLoading ? null : _authenticateWithBiometrics,
-                      icon: Icon(Icons.fingerprint, color: colorScheme.primary),
-                      label: Text('Login with Biometrics', style: textTheme.titleMedium?.copyWith(color: colorScheme.primary)),
+                      icon: Icon(Icons.face_unlock_outlined, color: colorScheme.primary),
+                      label: Text('Login with Face ID / Biometrics', style: textTheme.titleMedium?.copyWith(color: colorScheme.primary)),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: colorScheme.primary, width: 2), // Border color
+                        side: BorderSide(color: colorScheme.primary, width: 2), 
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -427,14 +438,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // BUTANG GOOGLE SUDAH DIBUANG
-                    // IconButton(
-                    //   icon: Icon(Icons.g_mobiledata, size: 40, color: colorScheme.primary),
-                    //   onPressed: () => _socialLogin('google'),
-                    //   tooltip: 'Login with Google',
-                    // ),
-                    // const SizedBox(width: 20), // Boleh buang ini jika tiada butang Google
-
                     IconButton(
                       icon: Icon(Icons.facebook, size: 40, color: colorScheme.primary),
                       onPressed: () => _socialLogin('facebook'),

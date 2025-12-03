@@ -101,24 +101,26 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.light(
           primary: AppColors.primaryGreen,
           secondary: AppColors.secondaryGreen,
-          surface: Colors.white,
-          onSurface: Colors.black87,
+          // Add other colors as needed for your light theme
+          surface: Colors.white, // Example surface color
+          onSurface: Colors.black87, // Example text color on background
         ),
+        // You can also define text themes, button themes, etc. here
+        // textTheme: lightTextTheme, // If you have a custom lightTextTheme
       ),
-
-      // DARK THEME
+      // Define dark theme using ThemeData.dark() and custom colors
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: const ColorScheme.dark(
           primary: AppColors.darkPrimaryGreen,
           secondary: AppColors.darkSecondaryGreen,
-          surface: Color(0xFF121212),
-          onSurface: Colors.white70,
+          // Add other colors as needed for your dark theme
+          surface: Color(0xFF121212), // Example dark surface color
+          onSurface: Colors.white70, // Example text color on dark background
         ),
+        // textTheme: darkTextTheme, // If you have a custom darkTextTheme
       ),
-
-      themeMode: themeProvider.themeMode,
-      initialRoute: '/splash',
-
+      themeMode: themeProvider.themeMode, // Use the theme mode from ThemeProvider
+      initialRoute: '/splash', // Start with the splash screen
       routes: {
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => LoginScreen(themeProvider: themeProvider),

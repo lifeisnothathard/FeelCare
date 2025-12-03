@@ -29,8 +29,6 @@ dependencies:
   table_calendar: ^3.0.9 # We'll need this later for the calendar
   flutter_local_notifications: ^19.5.0 # We'll need this later for notifications
   intl: ^0.20.2
-  firebase_messaging: ^15.2.8
-  timezone: ^0.10.1
 
 
 dev_dependencies:
