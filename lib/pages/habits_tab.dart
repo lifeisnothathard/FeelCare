@@ -391,10 +391,10 @@ class _HabitsTabState extends State<HabitsTab> {
                                               onPressed: () =>
                                                   Navigator.of(dialogContext)
                                                       .pop(true),
-                                              child: const Text('Delete'),
                                               style: TextButton.styleFrom(
                                                   foregroundColor: AppColors
-                                                      .errorRed), // Using a direct color from AppColors
+                                                      .errorRed),
+                                              child: const Text('Delete'), // Using a direct color from AppColors
                                             ),
                                           ],
                                         );
