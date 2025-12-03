@@ -1,5 +1,5 @@
 // lib/main.dart
-import 'package:feelcare/drawer/dashboard.dart'; // Assuming this is DashboardPage
+import 'package:feelcare/drawer/dashboard.dart';
 import 'package:feelcare/pages/home_page.dart';
 import 'package:feelcare/pages/login.dart';
 import 'package:feelcare/pages/sign_up.dart';
@@ -11,38 +11,57 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:feelcare/pages/splash_screen.dart';
 import 'package:feelcare/themes/theme_provider.dart';
 import 'package:feelcare/services/auth_service.dart';
-import 'package:feelcare/firebase_options.dart'; // Import firebase options
-import 'package:feelcare/themes/colors.dart'; // Import our consolidated AppColors
-// The following imports are redundant if themeProvider handles them,
-// but keeping them if they define specific ThemeData objects.
-// import 'package:feelcare/themes/light_mode.dart'; // Import light mode theme
-// import 'package:feelcare/themes/dark_mode.dart'; // Import dark mode theme
-import 'package:feelcare/pages/profile_screen.dart'; // Import ProfileScreen widget
+import 'package:feelcare/firebase_options.dart';
+import 'package:feelcare/themes/colors.dart';
+import 'package:feelcare/pages/profile_screen.dart';
+import 'package:feelcare/pages/biometric_settings.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 
-// Define AppColors if not already defined elsewhere.
-// If AppColors is already defined in 'package:feelcare/themes/colors.dart',
-// this block can be removed to avoid duplication.
-// Keeping it here for now as per your provided code.
+// ⭐ ADD THIS
+class NotificationService {
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  static Future<void> init() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await _notificationsPlugin.initialize(initializationSettings);
+  }
+}
+
 class AppColors {
   static const Color primaryGreen = Color(0xFF43A047);
   static const Color secondaryGreen = Color(0xFF66BB6A);
   static const Color darkPrimaryGreen = Color(0xFF2E7031);
   static const Color darkSecondaryGreen = Color(0xFF388E3C);
 
-  // Add getAdaptiveBackgroundColor if it's part of AppColors
   static Color getAdaptiveBackgroundColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.light
-        ? Colors.white // Light mode background
-        : Colors.grey[900]!; // Dark mode background
+        ? Colors.white
+        : Colors.grey[900]!;
   }
 }
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ⭐ ADD THIS FOR LOCAL NOTIFICATION TIMEZONE
+  tz.initializeTimeZones();
+
+  // Firebase
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // Add this line
+    options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ⭐ ADD THIS: INITIALIZE ALL NOTIFICATIONS
+  await NotificationService.init();
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
@@ -50,20 +69,16 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Provides the FirebaseAuth user stream for authentication state changes
         StreamProvider<User?>.value(
           value: FirebaseAuth.instance.authStateChanges(),
-          initialData: null, // Initial data before stream emits
-          catchError: (_, err) => null, // Handle potential errors in the stream
+          initialData: null,
+          catchError: (_, __) => null,
         ),
-        // Provides the ThemeProvider as a ChangeNotifierProvider
-        // This allows widgets to listen for theme changes and rebuild
         ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
-        // Provides AuthService
         Provider<AuthService>(create: (_) => AuthService()),
-        // IMPORTANT: Provide HabitMoodService as a ChangeNotifierProvider
-        // since it now extends ChangeNotifier and uses notifyListeners().
-        ChangeNotifierProvider<HabitMoodService>(create: (_) => HabitMoodService()),
+        ChangeNotifierProvider<HabitMoodService>(
+          create: (_) => HabitMoodService(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -75,47 +90,43 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access the ThemeProvider from the widget tree
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Set to false for production
+      debugShowCheckedModeBanner: false,
       title: 'FeelCare',
-      // Define light theme using ThemeData.light() and custom colors
+
+      // LIGHT THEME
       theme: ThemeData.light().copyWith(
         colorScheme: const ColorScheme.light(
           primary: AppColors.primaryGreen,
           secondary: AppColors.secondaryGreen,
-          // Add other colors as needed for your light theme
-          surface: Colors.white, // Example surface color
-          onSurface: Colors.black87, // Example text color on background
+          surface: Colors.white,
+          onSurface: Colors.black87,
         ),
-        // You can also define text themes, button themes, etc. here
-        // textTheme: lightTextTheme, // If you have a custom lightTextTheme
       ),
-      // Define dark theme using ThemeData.dark() and custom colors
+
+      // DARK THEME
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: const ColorScheme.dark(
           primary: AppColors.darkPrimaryGreen,
           secondary: AppColors.darkSecondaryGreen,
-          // Add other colors as needed for your dark theme
-          surface: Color(0xFF121212), // Example dark surface color
-          onSurface: Colors.white70, // Example text color on dark background
+          surface: Color(0xFF121212),
+          onSurface: Colors.white70,
         ),
-        // textTheme: darkTextTheme, // If you have a custom darkTextTheme
       ),
-      themeMode: themeProvider.themeMode, // Use the theme mode from ThemeProvider
-      initialRoute: '/splash', // Start with the splash screen
+
+      themeMode: themeProvider.themeMode,
+      initialRoute: '/splash',
+
       routes: {
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => LoginScreen(themeProvider: themeProvider),
         '/signup': (_) => SignUpScreen(themeProvider: themeProvider),
-        '/home': (_) => const HomePage(), // HomePage is the main content with tabs
-        // DashboardPage is imported from drawer/dashboard.dart,
-        // ensure it's still needed as a separate route if HomePage handles tabs.
-        // If HomePage is the primary dashboard, this route might be redundant.
+        '/home': (_) => const HomePage(),
         '/dashboard': (_) => DashboardPage(themeProvider: themeProvider),
         '/profile': (_) => ProfileScreen(themeProvider: themeProvider),
+        '/biometric_settings': (_) => const BiometricSettingsScreen(),
       },
     );
   }
