@@ -1,38 +1,71 @@
 // lib/main.dart
-import 'package:feelcare/drawer/dashboard.dart';
-import 'package:feelcare/pages/home_page.dart';
-import 'package:feelcare/pages/login.dart';
-import 'package:feelcare/pages/sign_up.dart';
-import 'package:feelcare/services/habit_mood_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:feelcare/pages/splash_screen.dart';
-import 'package:feelcare/themes/theme_provider.dart';
-import 'package:feelcare/services/auth_service.dart';
-import 'package:feelcare/firebase_options.dart';
-import 'package:feelcare/themes/colors.dart';
-import 'package:feelcare/pages/profile_screen.dart';
-import 'package:feelcare/pages/biometric_settings.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz; // Added for scheduling
 
-// ⭐ ADD THIS
+// Relative imports
+import 'drawer/dashboard.dart';
+import 'pages/home_page.dart';
+import 'pages/login.dart';
+import 'pages/sign_up.dart';
+import 'pages/splash_screen.dart';
+import 'pages/profile_screen.dart';
+import 'pages/biometric_settings.dart';
+import 'themes/theme_provider.dart';
+import 'services/auth_service.dart';
+import 'services/habit_mood_service.dart';
+import 'firebase_options.dart';
+
 class NotificationService {
-  static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
+    const AndroidInitializationSettings initializationSettingsAndroid = 
         AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    final InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
-
+    
+    final InitializationSettings initializationSettings = 
+        InitializationSettings(android: initializationSettingsAndroid);
+    
     await _notificationsPlugin.initialize(initializationSettings);
+    
+    // Request permissions for iOS/Android 13+
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  // NEW: Schedule a daily reminder for the user to check their habits
+  static Future<void> scheduleDailyReminder() async {
+    await _notificationsPlugin.zonedSchedule(
+      0,
+      'FeelCare Reminder 🌿',
+      'Time to check in on your habits and mood!',
+      _nextInstanceOfTime(20, 0), // Sets reminder for 8:00 PM
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_reminder_channel',
+          'Daily Reminders',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
   }
 }
 
@@ -43,25 +76,19 @@ class AppColors {
   static const Color darkSecondaryGreen = Color(0xFF388E3C);
 
   static Color getAdaptiveBackgroundColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.light
-        ? Colors.white
-        : Colors.grey[900]!;
+    return Theme.of(context).brightness == Brightness.light ? Colors.white : Colors.grey[900]!;
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // ⭐ ADD THIS FOR LOCAL NOTIFICATION TIMEZONE
   tz.initializeTimeZones();
-
-  // Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // ⭐ ADD THIS: INITIALIZE ALL NOTIFICATIONS
+  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Initialize and schedule notifications
   await NotificationService.init();
+  await NotificationService.scheduleDailyReminder();
 
   final themeProvider = ThemeProvider();
   await themeProvider.loadThemePreference();
@@ -69,16 +96,14 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        StreamProvider<User?>.value(
-          value: FirebaseAuth.instance.authStateChanges(),
+        StreamProvider<User?>(
+          create: (_) => FirebaseAuth.instance.authStateChanges(),
           initialData: null,
-          catchError: (_, __) => null,
         ),
         ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
         Provider<AuthService>(create: (_) => AuthService()),
-        ChangeNotifierProvider<HabitMoodService>(
-          create: (_) => HabitMoodService(),
-        ),
+        // This service will now handle your "Streak" and "Calendar" data logic
+        ChangeNotifierProvider<HabitMoodService>(create: (_) => HabitMoodService()),
       ],
       child: const MyApp(),
     ),
@@ -95,40 +120,32 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FeelCare',
-
-      // LIGHT THEME
       theme: ThemeData.light().copyWith(
         colorScheme: const ColorScheme.light(
           primary: AppColors.primaryGreen,
           secondary: AppColors.secondaryGreen,
-          // Add other colors as needed for your light theme
-          surface: Colors.white, // Example surface color
-          onSurface: Colors.black87, // Example text color on background
+          surface: Colors.white,
+          onSurface: Colors.black87,
         ),
-        // You can also define text themes, button themes, etc. here
-        // textTheme: lightTextTheme, // If you have a custom lightTextTheme
       ),
-      // Define dark theme using ThemeData.dark() and custom colors
       darkTheme: ThemeData.dark().copyWith(
         colorScheme: const ColorScheme.dark(
           primary: AppColors.darkPrimaryGreen,
           secondary: AppColors.darkSecondaryGreen,
-          // Add other colors as needed for your dark theme
-          surface: Color(0xFF121212), // Example dark surface color
-          onSurface: Colors.white70, // Example text color on dark background
+          surface: Color(0xFF121212),
+          onSurface: Colors.white70,
         ),
-        // textTheme: darkTextTheme, // If you have a custom darkTextTheme
       ),
-      themeMode: themeProvider.themeMode, // Use the theme mode from ThemeProvider
-      initialRoute: '/splash', // Start with the splash screen
+      themeMode: themeProvider.themeMode,
+      initialRoute: '/splash',
       routes: {
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => LoginScreen(themeProvider: themeProvider),
         '/signup': (_) => SignUpScreen(themeProvider: themeProvider),
-        '/home': (_) => const HomePage(),
+        '/home': (_) => const HomePage(), // This is where you add the Motion Sensor & Calendar
         '/dashboard': (_) => DashboardPage(themeProvider: themeProvider),
         '/profile': (_) => ProfileScreen(themeProvider: themeProvider),
-        '/biometric_settings': (_) => const BiometricSettingsScreen(),
+        '/biometric_settings': (_) => const BiometricSettingsScreen(), // Biometric sensor setup here
       },
     );
   }
