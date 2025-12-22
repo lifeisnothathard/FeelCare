@@ -374,33 +374,25 @@ class _HabitsTabState extends State<HabitsTab> {
                               print('Delete habit: ${habit.name}');
                               try {
                                 final bool confirmDelete = await showDialog(
-                                      context: context,
-                                      builder: (BuildContext dialogContext) {
-                                        return AlertDialog(
-                                          title: const Text('Confirm Deletion'),
-                                          content: Text(
-                                              'Are you sure you want to delete "${habit.name}"?'),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(dialogContext)
-                                                      .pop(false),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(dialogContext)
-                                                      .pop(true),
-                                              child: const Text('Delete'),
-                                              style: TextButton.styleFrom(
-                                                  foregroundColor: AppColors
-                                                      .errorRed), // Using a direct color from AppColors
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ) ??
-                                    false;
+                                  context: context,
+                                  builder: (BuildContext dialogContext) {
+                                    return AlertDialog(
+                                      title: const Text('Confirm Deletion'),
+                                      content: Text('Are you sure you want to delete "${habit.name}"?'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                                          child: const Text('Delete'),
+                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ) ?? false; // Default to false if dialog is dismissed
 
                                 if (confirmDelete) {
                                   await habitMoodService.deleteHabit(habit.id!);
