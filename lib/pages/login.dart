@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:feelcare/themes/colors.dart'; 
+import 'package:flutter/foundation.dart' show kIsWeb; // 1. ADD THIS IMPORT
 
 class LoginScreen extends StatefulWidget {
   final ThemeProvider themeProvider;
@@ -34,45 +35,53 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _loadRememberMe();
-    _checkBiometricsAndAutoTrigger(); // UPDATED: Now handles auto-trigger
+    
+    // 2. ONLY check biometrics if NOT on Web to avoid the MissingPluginException
+    if (!kIsWeb) {
+      _checkBiometricsAndAutoTrigger();
+    }
   }
 
   // --- Biometric Authentication Logic ---
   
-  // NEW: Checks settings AND triggers the prompt automatically if enabled
   Future<void> _checkBiometricsAndAutoTrigger() async {
-    bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
-    bool isDeviceSupported = await _localAuth.isDeviceSupported();
-    
-    final prefs = await SharedPreferences.getInstance();
-    final bool enabled = prefs.getBool('biometricEnabled') ?? false; 
+    // Extra safety: double check kIsWeb here
+    if (kIsWeb) return;
 
-    if (mounted) {
-      setState(() {
-        _isBiometricAvailable = canCheckBiometrics && isDeviceSupported;
-        _isBiometricEnabledByUser = enabled; 
-      });
+    try {
+      bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      bool isDeviceSupported = await _localAuth.isDeviceSupported();
+      
+      final prefs = await SharedPreferences.getInstance();
+      final bool enabled = prefs.getBool('biometricEnabled') ?? false; 
 
-      // AUTOMATIC TRIGGER:
-      // If the device supports it AND the user enabled it in settings, 
-      // show the biometric prompt immediately.
-      if (_isBiometricAvailable && _isBiometricEnabledByUser) {
-        // We wait for the first frame to be drawn so the UI is ready
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _authenticateWithBiometrics();
+      if (mounted) {
+        setState(() {
+          _isBiometricAvailable = canCheckBiometrics && isDeviceSupported;
+          _isBiometricEnabledByUser = enabled; 
         });
+
+        if (_isBiometricAvailable && _isBiometricEnabledByUser) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _authenticateWithBiometrics();
+          });
+        }
       }
+    } catch (e) {
+      debugPrint('Error checking biometrics: $e');
     }
   }
 
   Future<void> _authenticateWithBiometrics() async {
+    if (kIsWeb) return; // Prevent execution on Web
+
     try {
       bool authenticated = await _localAuth.authenticate(
         localizedReason: 'Scan your face or fingerprint to log in to FeelCare.',
         options: const AuthenticationOptions(
           stickyAuth: true,
           useErrorDialogs: true,
-          biometricOnly: true, // Prevents falling back to PIN automatically
+          biometricOnly: true, 
         ),
       );
 
@@ -90,8 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final storedEmail = prefs.getString('email');
 
     if (storedEmail != null) {
-      // In a real production app, you'd use a secure token here.
-      // For your current setup, we proceed to home as the session is verified.
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home'); 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,8 +164,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // --- UI Components ---
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -187,7 +192,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text('Welcome to FeelCare', style: textTheme.headlineMedium),
                 const SizedBox(height: 32),
 
-                // Email Field
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
@@ -196,7 +200,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
@@ -210,7 +213,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
-                // Remember Me & Forgot Password
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -232,7 +234,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 24),
 
-                // Login Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -242,8 +243,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Biometric Button (Visible only if supported/enabled)
-                if (_isBiometricAvailable && _isBiometricEnabledByUser) ...[
+                // 3. UI GUARD: Hide the biometric button entirely on Web
+                if (!kIsWeb && _isBiometricAvailable && _isBiometricEnabledByUser) ...[
                   const SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _authenticateWithBiometrics,
