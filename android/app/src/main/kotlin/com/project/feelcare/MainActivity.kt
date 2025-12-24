@@ -1,4 +1,4 @@
-package com.example.feelcare
+package com.project.feelcare
 
 import io.flutter.embedding.android.FlutterActivity
 import android.os.Bundle

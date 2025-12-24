@@ -17,21 +17,21 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    // Verified: Matches your Firebase setup
+    // Verified: Matches your Package Name
     namespace = "com.project.feelcare" 
 
     compileSdk = flutter.compileSdkVersion.toInt()
 
     defaultConfig {
-        applicationId = localProperties.getProperty("flutter.applicationId") ?: "com.project.feelcare"
+        applicationId = "com.project.feelcare"
         
-        // --- FIX: Increased from 21 to 23 for Firebase Auth ---
+        // --- Required for Firebase & Biometrics ---
         minSdk = 23 
-        
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
         
+        // --- Essential for heavy apps with many plugins ---
         multiDexEnabled = true 
     }
 
@@ -43,7 +43,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
     
     sourceSets {
@@ -51,13 +51,26 @@ android {
             java.srcDirs("src/main/kotlin")
         }
     }
+
+    buildTypes {
+        release {
+            // Add your signing config here if needed later
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     testImplementation("junit:junit:4.13.2")
+    // Implementation for multidex support
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
 flutter {
-    source = "../.."
+    source = ".."
 }
+
+// --- THE MISSING PIECE ---
+// This line MUST be at the very bottom to connect Google Services properly
+apply(plugin = "com.google.gms.google-services")
