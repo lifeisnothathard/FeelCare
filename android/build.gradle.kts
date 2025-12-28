@@ -2,6 +2,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://developer.huawei.com/repo/' } // Huawei Maven repository
     }
 }
 
@@ -22,4 +23,5 @@ tasks.register<Delete>("clean") {
 
 dependencies {
     classpath("com.google.gms:google-services:4.3.15") // Add this line
+    classpath 'com.huawei.agconnect:agcp:1.6.0.300' // AppGallery Connect plugin
 }
