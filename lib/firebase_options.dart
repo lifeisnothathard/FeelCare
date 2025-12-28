@@ -50,20 +50,20 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyATmsrGYhb-h2rLYha1AzTkskmLwgbqZJk',
-    appId: '1:244212724590:android:7b2600c0190ea8c436477f',
+    apiKey: 'AIzaSyAe-QWqliLVf5Hdoekr1GTxuoBVfAumclY', // From your JSON
+    appId: '1:244212724590:android:aac2d2c87de78b9136477f', // THE FIX: Matches com.project.feelcare
     messagingSenderId: '244212724590',
     projectId: 'feel-care-2e521',
     storageBucket: 'feel-care-2e521.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCpgpKT79IA37v70cX8YbX5MslwWUJseOo',
+    apiKey: 'AIzaSyAe-QWqliLVf5Hdoekr1GTxuoBVfAumclY',
     appId: '1:244212724590:ios:49bd9c1519c20ced36477f',
     messagingSenderId: '244212724590',
     projectId: 'feel-care-2e521',
     storageBucket: 'feel-care-2e521.firebasestorage.app',
-    iosBundleId: 'com.example.feelcare',
+    iosBundleId: 'com.project.feelcare', // Updated from example to project
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

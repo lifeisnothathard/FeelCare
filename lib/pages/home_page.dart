@@ -1,81 +1,118 @@
-// lib/pages/home_page.dart
-
+import 'package:feelcare/pages/habits_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Assuming you use FirebaseAuth for user stream
-import 'package:feelcare/drawer/side_dashboard.dart'; // AppDrawer
-import 'package:feelcare/themes/theme_provider.dart';
-
-// Import your tab pages
-import 'package:feelcare/pages/habits_tab.dart';
-import 'package:feelcare/pages/dashboard_tab.dart';
-import 'package:feelcare/widgets/add_habit_mood_dialog.dart'; // Correct dialog import
+import '../services/habit_mood_service.dart';
+import '../models/habit.dart';
+import 'add_habit_mood_dialog.dart';
+import '../drawer/dashboard.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // User can be accessed if provided in main.dart's MultiProvider
-    final user = Provider.of<User?>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final service = Provider.of<HabitMoodService>(context);
 
     return DefaultTabController(
-      length: 2, // We have two tabs: Habits and Dashboard
-      child: Builder( // Use Builder to access the TabController
-        builder: (BuildContext defaultTabContext) {
-          // Access the TabController provided by DefaultTabController
-          final TabController tabController = DefaultTabController.of(defaultTabContext);
-
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('FeelCare'),
-              centerTitle: false,
-              bottom: const TabBar(
-                tabs: [
-                  Tab(text: 'Habits'),
-                  Tab(text: 'Dashboard'),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: Icon(themeProvider.themeMode == ThemeMode.dark
-                      ? Icons.light_mode
-                      : Icons.dark_mode),
-                  onPressed: () => themeProvider.toggleTheme(
-                    !(themeProvider.themeMode == ThemeMode.dark),
-                  ),
-                ),
-              ],
-            ),
-            drawer: AppDrawer(themeProvider: themeProvider),
-            body: const TabBarView(
-              children: [
-                HabitsTab(), // Your Habits tab content
-                DashboardTab(), // Your Dashboard tab content
-              ],
-            ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () {
-                // Determine the current tab's index
-                final int currentTabIndex = tabController.index;
-                // Based on the index, decide the initial type for the dialog
-                final String initialType = currentTabIndex == 0 ? 'habit' : 'mood';
-
-                showDialog(
-                  context: context,
-                  builder: (BuildContext dialogContext) {
-                    // Pass the determined initial type to the dialog
-                    return AddHabitMoodDialog(initialEntryType: initialType);
-                  },
-                );
-              },
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
-            ),
-          );
-        },
+      length: 2,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text("FeelCare", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          bottom: const TabBar(
+            indicatorColor: Colors.green,
+            labelColor: Colors.green,
+            tabs: [
+              Tab(icon: Icon(Icons.calendar_today), text: "Habits"),
+              Tab(icon: Icon(Icons.bar_chart), text: "Progress"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildHabitTab(service),
+            const DashboardPage(),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.green,
+          onPressed: () => showDialog(context: context, builder: (c) => const AddHabitMoodDialog()),
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
       ),
+    );
+  }
+
+  Widget _buildHabitTab(HabitMoodService service) {
+    return Column(
+      children: [
+        // --- SIMPLE HORIZONTAL CALENDAR ---
+        Container(
+          height: 100,
+          color: Colors.white,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 7,
+            itemBuilder: (context, index) {
+              return Container(
+                width: 60,
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: index == 0 ? Colors.green : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Day", style: TextStyle(color: index == 0 ? Colors.white : Colors.black)),
+                    Text("${index + 1}", style: TextStyle(fontWeight: FontWeight.bold, color: index == 0 ? Colors.white : Colors.black)),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        
+        // --- HABIT LIST ---
+        Expanded(
+          child: StreamBuilder<List<Habit>>(
+            stream: service.habitsStream,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+              final habits = snapshot.data!;
+              if (habits.isEmpty) return const Center(child: Text("No habits for today. Add one!"));
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: habits.length,
+                itemBuilder: (context, index) {
+                  final h = habits[index];
+                  return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: Checkbox(
+                        activeColor: Colors.green,
+                        value: h.isCompleted,
+                        onChanged: (_) => service.toggleHabit(h),
+                      ),
+                      title: Text(h.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text("${h.mood} • Streak: ${h.streak} Days 🔥"),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => service.deleteHabit(h.id),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

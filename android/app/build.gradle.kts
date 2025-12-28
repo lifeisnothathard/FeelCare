@@ -1,54 +1,76 @@
+// File: android/app/build.gradle.kts
+
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services") 
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
 android {
+    // Verified: Matches your Package Name
+    namespace = "com.project.feelcare" 
+
+    compileSdk = flutter.compileSdkVersion.toInt()
+
     defaultConfig {
-        minSdkVersion 21 // Required for biometrics
+        applicationId = "com.project.feelcare"
+        
+        // --- Required for Firebase & Biometrics ---
+        minSdk = 23 
+        targetSdk = flutter.targetSdkVersion.toInt()
+        versionCode = flutter.versionCode.toInt()
+        versionName = flutter.versionName
+        
+        // --- Essential for heavy apps with many plugins ---
+        multiDexEnabled = true 
     }
-    namespace = "com.example.feelcare"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true 
+        
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "17"
     }
-
-    defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.feelcare"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+    
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/kotlin")
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Add your signing config here if needed later
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
-flutter {
-    source = "../.."
-}
-
-apply(plugin = "com.google.gms.google-services")
-
 dependencies {
-    implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    testImplementation("junit:junit:4.13.2")
+    // Implementation for multidex support
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
+flutter {
+    source = ".."
+}
+
+// --- THE MISSING PIECE ---
+// This line MUST be at the very bottom to connect Google Services properly
+apply(plugin = "com.google.gms.google-services")
