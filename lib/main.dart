@@ -1,54 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'firebase_options.dart'; // Ensure this file exists from firebase flutterfire configure
-import 'services/habit_mood_service.dart';
-import 'pages/home_page.dart';
-import 'pages/login.dart';
+import 'firebase_options.dart';
+import 'services/auth_service.dart';
+import 'services/habit_service.dart';
+import 'pages/auth_page.dart';
+import 'pages/homepage.dart';
+import 'pages/dashboard_page.dart';
+import 'pages/profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Hive.initFlutter();
+  await Hive.openBox('feelcare_box');
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => HabitService()),
+      ],
+      child: const MyApp(),
+    ),
   );
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => HabitMoodService()),
-      ],
-      child: MaterialApp(
-        title: 'FeelCare',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.green,
-          useMaterial3: true,
-        ),
-        // This checks if the user is logged in
-        home: const HomePage(), 
-        routes: {
-          '/home': (context) => const HomePage(),
-          '/login': (context) => const LoginPage(),
-        },
-      ),
-    );
-  }
-}
-
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: const Center(child: Text('Login Page')),
+    final auth = Provider.of<AuthService>(context);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      themeMode: auth.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.green),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      home: auth.currentUser == null ? const AuthPage() : const HomePage(),
+      routes: {
+        '/login': (context) => const AuthPage(),
+        '/home': (context) => const HomePage(),
+        '/dashboard': (context) => const DashboardPage(),
+        '/profile': (context) => const ProfilePage(),
+      },
     );
   }
 }

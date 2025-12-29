@@ -12,6 +12,7 @@ analyzer:
     use_build_context_synchronously: ignore
     unused_import: ignore
     await_only_futures: ignore
+    unused_element: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

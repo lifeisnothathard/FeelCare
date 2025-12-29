@@ -1,53 +1,39 @@
 name: feelcare
-description: "A new Flutter project."
+description: A complete habit and mood tracker.
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # General range for Flutter 3.x to avoid constant updates
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
-  flutter_slidable: ^4.0.0
-  hive: ^2.2.3
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
+  firebase_messaging: ^15.0.0
+  provider: ^6.1.2
   hive_flutter: ^1.1.0
-  flutter_heatmap_calendar: ^1.0.5
-  firebase_auth: ^5.6.0 # Keeping this version as it was, to resolve 'web' conflict by downgrading build_runner
-  firebase_core: ^3.14.0 # Keeping this version as it was
-  provider: ^6.1.1
+  lottie: ^3.1.0
+  fl_chart: ^0.66.0
+  confetti: ^0.7.0
+  shake: ^2.2.0
   local_auth: ^2.2.0
-  shared_preferences: ^2.2.3
-  flutter_facebook_auth: ^7.1.2
-  url_launcher: ^6.3.0
-  image_picker: ^1.1.2
-  firebase_storage: ^12.4.7
-  cloud_firestore: ^5.6.9 # <<< ADD THIS LINE
-  flutter_local_notifications: ^19.5.0 # We'll need this later for notifications
-  intl: ^0.20.2
-  firebase_messaging: ^15.2.8
-  timezone: ^0.10.1
-  sensors_plus: ^6.1.1
-  table_calendar: ^3.1.2
-  path_provider: ^2.1.2
-  lottie: ^3.3.1
-  connectivity_plus: ^7.0.0
-  fl_chart: ^0.70.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  hive_generator: ^2.0.1
-  build_runner: ^2.4.14 # Downgraded as suggested by the pub error message
-  flutter_lints: 5.0.0
+  table_calendar: ^3.1.0
+  audioplayers: ^5.2.1
+  url_launcher: ^6.2.5
+  intl: ^0.19.0
 
 flutter:
   uses-material-design: true
-
   assets:
-    - assets/lottie/heart.json
-    - assets/lottie/loading.json
-    - assets/lottie/star.json
+    - assets/lottie/dancer-woman.json
+    - assets/lottie/fire heart.json
+    - assets/lottie/loading refresh.json
+    - assets/lottie/hi_stiker.json
+    - assets/lottie/happy_sticker.json
+    - assets/sounds/bahagia.mp3
+    - assets/sounds/cakcakcekuk.mp3
+    - assets/sounds/zootopia.mp3
+    - assets/sounds/btob.mp3
