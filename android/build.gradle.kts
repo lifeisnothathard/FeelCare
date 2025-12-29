@@ -11,6 +11,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://developer.huawei.com/repo/' } // Huawei Maven repository
     }
 }
 
@@ -28,4 +29,8 @@ subprojects {
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
+}
+
+dependencies {
+    classpath("com.google.gms:google-services:4.3.15") // Add this line
 }
