@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     _confetti = ConfettiController(duration: const Duration(seconds: 2));
     
     // SHAKE FEATURE
-    ShakeDetector.autoStart(onPhoneShake: () {
+    ShakeDetector.autoStart(onPhoneShake: (event) {
       _confetti.play();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Stay Positive! ✨")));
     });

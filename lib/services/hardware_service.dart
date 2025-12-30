@@ -4,17 +4,25 @@ import 'package:shake/shake.dart';
 class HardwareService {
   final LocalAuthentication auth = LocalAuthentication();
 
-  // Biometrics (Mobile only)
+  // 1. Biometrics
   Future<bool> authenticate() async {
     try {
-      return await auth.authenticate(localizedReason: 'Please authenticate to open FeelCare');
+      return await auth.authenticate(
+        localizedReason: 'Please authenticate to open FeelCare',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: false,
+        ),
+      );
     } catch (e) {
       return false;
     }
   }
 
-  // Shake Detection
-  void initShake(Function onShake) {
-    ShakeDetector.autoStart(onPhoneShake: () => onShake());
+  // 2. Shake Detection - Guna PhoneShakeCallback terus
+  void initShake(PhoneShakeCallback onShake) {
+    ShakeDetector.autoStart(
+      onPhoneShake: onShake,
+    );
   }
 }

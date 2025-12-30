@@ -18,12 +18,14 @@ dependencies:
   lottie: ^3.1.0
   fl_chart: ^0.66.0
   confetti: ^0.7.0
-  shake: ^2.2.0
+  shake: 3.0.0
   local_auth: ^2.2.0
   table_calendar: ^3.1.0
   audioplayers: ^5.2.1
   url_launcher: ^6.2.5
   intl: ^0.19.0
+  path_provider: ^2.1.5
+  sensors_plus: 6.1.2
 
 flutter:
   uses-material-design: true

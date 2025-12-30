@@ -4,7 +4,10 @@ import 'package:local_auth/local_auth.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  // 1. Pastikan baris bawah ini TIDAK kena comment (buang //)
   final LocalAuthentication _localAuth = LocalAuthentication();
+  
   bool _isDarkMode = false;
 
   bool get isDarkMode => _isDarkMode;
@@ -15,14 +18,20 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // 2. Letak tanda // untuk tajuk ni supaya tak error
   // Biometric Authentication
   Future<bool> authenticate() async {
     try {
+      // Pastikan package local_auth dah ada dalam pubspec.yaml
       return await _localAuth.authenticate(
         localizedReason: 'Please authenticate to open FeelCare',
-        options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+        options: const AuthenticationOptions(
+          biometricOnly: true, 
+          stickyAuth: true,
+        ),
       );
     } catch (e) {
+      debugPrint("Biometric Error: $e");
       return false;
     }
   }

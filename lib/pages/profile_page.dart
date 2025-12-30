@@ -26,6 +26,7 @@ class ProfilePage extends StatelessWidget {
             onTap: () async {
               bool authenticated = await auth.authenticate();
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(authenticated ? "Verified!" : "Failed")));
+             
             },
           ),
           ListTile(
